@@ -1,0 +1,38 @@
+{
+  "name": "@bridgewager/vincent-policy-polymarket-policy",
+  "version": "0.0.1",
+  "description": "A Vincent policy created with @lit-protocol/vincent-scaffold-sdk",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "scripts": {
+    "build": "npm run action:build && tsc && npm run action:deploy",
+    "action:build": "vincent-scaffold pkg build",
+    "action:deploy": "sh -c '[ -f .env ] && dotenv -e .env -- vincent-scaffold pkg deploy || dotenv -e ../../../.env -- vincent-scaffold pkg deploy'",
+    "clean": "vincent-scaffold pkg clean"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@lit-protocol/vincent-scaffold-sdk": "^2.0.0",
+    "@lit-protocol/vincent-ability-sdk": "^2.0.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./action": "./src/generated/lit-action.js"
+  },
+  "files": [
+    "dist",
+    "src/generated"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
