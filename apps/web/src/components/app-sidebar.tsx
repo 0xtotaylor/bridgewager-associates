@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useCurrentUser } from '@coinbase/cdp-hooks';
 import {
   IconCamera,
   IconChartBar,
@@ -10,18 +11,12 @@ import {
   IconFileDescription,
   IconFileWord,
   IconFolder,
-  IconHelp,
   IconInnerShadowTop,
   IconListDetails,
   IconReport,
-  IconSearch,
-  IconSettings,
   IconUsers,
 } from '@tabler/icons-react';
 
-import { NavDocuments } from '@/components/nav-documents';
-import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
 import {
   Sidebar,
   SidebarContent,
@@ -31,6 +26,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { NavDocuments } from '@/components/nav-documents';
+import { NavMain } from '@/components/nav-main';
+import { NavUser } from '@/components/nav-user';
 
 const data = {
   user: {
@@ -133,6 +131,8 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { currentUser } = useCurrentUser();
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -157,7 +157,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavDocuments items={data.documents} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        {currentUser && <NavUser user={currentUser} />}
       </SidebarFooter>
     </Sidebar>
   );

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { GalleryVerticalEnd } from 'lucide-react';
-import { useSignInWithEmail, useVerifyEmailOTP } from '@coinbase/cdp-hooks';
 import { useRouter } from 'next/navigation';
+import { useSignInWithEmail, useVerifyEmailOTP } from '@coinbase/cdp-hooks';
+import { GalleryVerticalEnd } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -11,15 +11,15 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
+  const router = useRouter();
   const { signInWithEmail } = useSignInWithEmail();
   const { verifyEmailOTP } = useVerifyEmailOTP();
-  const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
-  const [flowId, setFlowId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [flowId, setFlowId] = useState<string | null>(null);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +56,7 @@ export function LoginForm({
       console.log('User EVM address:', user.evmAccounts?.[0]);
       console.log('Is new user:', isNewUser);
 
-      router.push('/dashboard');
+      router.push('/');
     } catch (error) {
       console.error('Sign in failed:', error);
       setError('Invalid OTP. Please try again.');

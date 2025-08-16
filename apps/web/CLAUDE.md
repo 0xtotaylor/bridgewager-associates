@@ -15,6 +15,7 @@ This is a Next.js 15 web application within a Turborepo monorepo. The web app is
 ## Development Commands
 
 ### Local Development
+
 ```bash
 # Start development server (runs on port 3500 with Turbopack)
 npm run dev
@@ -23,11 +24,12 @@ yarn dev
 
 # Build for production
 npm run build
-# or from monorepo root  
+# or from monorepo root
 yarn build
 ```
 
 ### Code Quality
+
 ```bash
 # Lint with zero warnings tolerance
 npm run lint
@@ -40,7 +42,9 @@ yarn format
 ```
 
 ### Monorepo Commands
+
 From the repository root (`/Users/totaylor/Developer/bridgewager-associates/`):
+
 - `yarn dev` - Start all apps in development mode
 - `yarn build` - Build all apps and packages
 - `yarn lint` - Lint all workspaces
@@ -50,6 +54,7 @@ From the repository root (`/Users/totaylor/Developer/bridgewager-associates/`):
 ## Architecture Notes
 
 ### Styling System
+
 - Uses Tailwind CSS v4 with CSS variables for theming
 - Dark mode support via `prefers-color-scheme` media query
 - Custom color variables defined in `globals.css`:
@@ -57,18 +62,21 @@ From the repository root (`/Users/totaylor/Developer/bridgewager-associates/`):
   - Font variables from Geist font family
 
 ### Configuration
+
 - **ESLint**: Uses shared config from `@repo/eslint-config/next-js`
 - **TypeScript**: Extends `@repo/typescript-config/nextjs.json`
 - **PostCSS**: Configured for Tailwind CSS v4 processing
 - **Turborepo**: Orchestrates monorepo builds with dependency management
 
 ### File Structure
+
 - `src/app/` - Next.js App Router pages and layouts
 - `src/app/globals.css` - Global styles with Tailwind and theme variables
 - `public/` - Static assets (SVG icons)
 - Configuration files at root level for Next.js, TypeScript, ESLint, and PostCSS
 
 ### Development Environment
+
 - Node.js 18+ required
 - Yarn workspace package manager
 - Development server runs on port 3500

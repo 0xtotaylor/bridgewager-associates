@@ -1,16 +1,16 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Loader2Icon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useIsSignedIn, useIsInitialized } from '@coinbase/cdp-hooks';
+import { useIsInitialized, useIsSignedIn } from '@coinbase/cdp-hooks';
+import { Loader2Icon } from 'lucide-react';
 
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
 import { DataTable } from '@/components/data-table';
 import { SectionCards } from '@/components/section-cards';
 import { SiteHeader } from '@/components/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 
 import data from './data.json';
 
