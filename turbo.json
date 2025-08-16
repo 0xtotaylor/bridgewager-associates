@@ -5,12 +5,12 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "env": ["PORT"]
+      "env": ["PORT", "TUSKY_API_KEY", "NEXT_PUBLIC_CDP_PROJECT_ID", "NEXT_PUBLIC_ONCHAINKIT_API_KEY"]
     },
     "build": {
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
-      "env": ["PORT"]
+      "env": ["PORT", "TUSKY_API_KEY", "NEXT_PUBLIC_CDP_PROJECT_ID", "NEXT_PUBLIC_ONCHAINKIT_API_KEY"]
     },
     "lint": {},
     "test": {},
