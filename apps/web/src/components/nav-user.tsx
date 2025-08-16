@@ -2,7 +2,6 @@
 
 import { useSignOut, type User } from '@coinbase/cdp-hooks';
 import {
-  IconCreditCard,
   IconDotsVertical,
   IconLogout,
   IconNotification,

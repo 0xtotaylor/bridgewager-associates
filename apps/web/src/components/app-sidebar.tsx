@@ -3,19 +3,14 @@
 import * as React from 'react';
 import { useCurrentUser } from '@coinbase/cdp-hooks';
 import {
-  IconChartBar,
+  IconAlertTriangle,
+  IconChartPie,
   IconDatabase,
   IconInnerShadowTop,
   IconListDetails,
   IconReport,
-  IconUsers,
-  IconChartPie,
   IconShield,
-  IconBriefcase,
   IconTrendingUp,
-  IconTarget,
-  IconActivity,
-  IconAlertTriangle,
 } from '@tabler/icons-react';
 
 import {

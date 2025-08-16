@@ -1,5 +1,14 @@
-import { IconTrendingDown, IconTrendingUp, IconCurrencyDollar, IconChartLine, IconShield, IconTarget, IconChartDots3 } from '@tabler/icons-react';
+import {
+  IconChartDots3,
+  IconChartLine,
+  IconCurrencyDollar,
+  IconShield,
+  IconTarget,
+  IconTrendingDown,
+  IconTrendingUp,
+} from '@tabler/icons-react';
 
+import { mockFundMetrics } from '@/lib/mock-data';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -9,7 +18,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { mockFundMetrics } from '@/lib/mock-data';
 
 export function SectionCards() {
   const formatCurrency = (value: number) => {
@@ -52,7 +60,7 @@ export function SectionCards() {
           </div>
         </CardFooter>
       </Card>
-      
+
       <Card className="@container/card metric-card hedge-fund-card">
         <CardHeader>
           <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
@@ -74,11 +82,11 @@ export function SectionCards() {
             Realized + unrealized <IconTrendingUp className="size-4" />
           </div>
           <div className="text-muted-foreground hedge-fund-subtitle">
-            Today's profit/loss performance
+            Today&apos;s profit/loss performance
           </div>
         </CardFooter>
       </Card>
-      
+
       <Card className="@container/card metric-card hedge-fund-card">
         <CardHeader>
           <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
@@ -104,7 +112,7 @@ export function SectionCards() {
           </div>
         </CardFooter>
       </Card>
-      
+
       <Card className="@container/card metric-card hedge-fund-card">
         <CardHeader>
           <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
@@ -130,7 +138,7 @@ export function SectionCards() {
           </div>
         </CardFooter>
       </Card>
-      
+
       <Card className="@container/card metric-card hedge-fund-card">
         <CardHeader>
           <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">

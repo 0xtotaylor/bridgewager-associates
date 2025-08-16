@@ -1,8 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { Area, AreaChart, CartesianGrid, XAxis, ComposedChart, Bar } from 'recharts';
+import { Area, Bar, CartesianGrid, ComposedChart, XAxis } from 'recharts';
 
+import { mockHistoricalData } from '@/lib/mock-data';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Card,
@@ -26,7 +27,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { mockHistoricalData } from '@/lib/mock-data';
 
 export const description = 'Fund equity curve and daily PnL visualization';
 
@@ -53,21 +53,18 @@ export function ChartAreaInteractive() {
   }, [isMobile]);
 
   const filteredData = React.useMemo(() => {
-    const referenceDate = new Date();
     let daysToSubtract = 90;
     if (timeRange === '30d') {
       daysToSubtract = 30;
     } else if (timeRange === '7d') {
       daysToSubtract = 7;
     }
-    
-    return mockHistoricalData
-      .slice(-daysToSubtract)
-      .map(item => ({
-        ...item,
-        pnlPositive: item.pnlDaily > 0 ? item.pnlDaily : 0,
-        pnlNegative: item.pnlDaily < 0 ? item.pnlDaily : 0,
-      }));
+
+    return mockHistoricalData.slice(-daysToSubtract).map((item) => ({
+      ...item,
+      pnlPositive: item.pnlDaily > 0 ? item.pnlDaily : 0,
+      pnlNegative: item.pnlDaily < 0 ? item.pnlDaily : 0,
+    }));
   }, [timeRange]);
 
   const formatCurrency = (value: number) => {

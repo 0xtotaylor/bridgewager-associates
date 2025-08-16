@@ -1,3 +1,5 @@
+import { LucideIcon } from 'lucide-react';
+
 export type Agent = {
   id: string;
   name: string;
@@ -83,12 +85,16 @@ export type ComplianceAlert = {
   resolved: boolean;
 };
 
-export type Role = 'Research Analyst' | 'Portfolio Manager' | 'Trader' | 'Compliance Officer';
+export type Role =
+  | 'Research Analyst'
+  | 'Portfolio Manager'
+  | 'Trader'
+  | 'Compliance Officer';
 
 export type NavItem = {
   title: string;
   url: string;
-  icon: any;
+  icon: LucideIcon;
   role?: Role;
   items?: NavItem[];
 };
