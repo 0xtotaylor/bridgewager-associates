@@ -1,5 +1,11 @@
 import { createVincentPolicy } from "@lit-protocol/vincent-ability-sdk";
-import { checkSendLimit, resetSendCounter } from "./helpers/index";
+import {
+  validateEventId,
+  validateEndDate,
+  validateVolume,
+  getValidationFailureReason,
+  DEFAULT_ALLOWED_EVENT_IDS,
+} from "./helpers/index";
 import {
   commitAllowResultSchema,
   commitDenyResultSchema,
@@ -11,133 +17,75 @@ import {
   abilityParamsSchema,
   userParamsSchema,
 } from "./schemas";
-import { counterSignatures } from "./abi/counterSignatures";
-import { laUtils } from "@lit-protocol/vincent-scaffold-sdk";
+
+const PKG = "@bridgewager/vincent-policy-polymarket-policy" as const;
 
 export const vincentPolicy = createVincentPolicy({
-  packageName: "@agentic-ai/vincent-policy-polymarket-policy" as const,
+  packageName: PKG,
 
-  abilityParamsSchema,
-  userParamsSchema,
-  commitParamsSchema,
+  abilityParamsSchema: abilityParamsSchema,
+  userParamsSchema: userParamsSchema,
+  commitParamsSchema: commitParamsSchema as any,
 
-  precheckAllowResultSchema,
-  precheckDenyResultSchema,
+  precheckAllowResultSchema: precheckAllowResultSchema,
+  precheckDenyResultSchema: precheckDenyResultSchema,
 
-  evalAllowResultSchema,
-  evalDenyResultSchema,
+  evalAllowResultSchema: evalAllowResultSchema,
+  evalDenyResultSchema: evalDenyResultSchema,
 
-  commitAllowResultSchema,
-  commitDenyResultSchema,
+  commitAllowResultSchema: commitAllowResultSchema as any,
+  commitDenyResultSchema: commitDenyResultSchema as any,
 
   precheck: async (
     { abilityParams, userParams },
     { allow, deny, appId, delegation: { delegatorPkpInfo } }
   ) => {
-    console.log("[@agentic-ai/vincent-policy-polymarket-policy/precheck] 🔍 POLICY PRECHECK CALLED");
-    console.log("[@agentic-ai/vincent-policy-polymarket-policy/precheck] 🔍 Policy precheck params:", {
+    console.log(`[${PKG}/precheck] 🔍 POLICY PRECHECK CALLED`);
+    console.log(`[${PKG}/precheck] 🔍 Policy precheck params:`, {
       abilityParams,
       userParams,
       ethAddress: delegatorPkpInfo.ethAddress,
       appId,
     });
 
-    // Only use what we actually need - no defaults in policy logic
-    const { maxSends, timeWindowSeconds } = userParams;
-    const { ethAddress } = delegatorPkpInfo;
+    const { eventId } = abilityParams;
+    const { allowedEventIds } = userParams;
 
     try {
-      // Convert BigInt to number for helper function
-      const maxSendsNum = Number(maxSends);
-      const timeWindowSecondsNum = Number(timeWindowSeconds);
+      // Quick validation of event ID
+      const eventIdValid = validateEventId(eventId, allowedEventIds);
 
-      // Check current send limit for the user
-      const limitCheck = await checkSendLimit(
-        ethAddress,
-        maxSendsNum,
-        timeWindowSecondsNum
-      );
-
-      if (!limitCheck.allowed) {
+      if (!eventIdValid) {
+        const allowedList = allowedEventIds || DEFAULT_ALLOWED_EVENT_IDS;
         const denyResult = {
-          reason: `Send limit exceeded. Maximum ${Number(
-            maxSends
-          )} sends per ${Number(timeWindowSeconds)} seconds. Try again in ${limitCheck.secondsUntilReset
-            } seconds.`,
-          currentCount: limitCheck.currentCount,
-          maxSends: Number(maxSends),
-          secondsUntilReset: limitCheck.secondsUntilReset || 0,
+          reason: `Event ID ${eventId} is not in the allowed list`,
+          eventId,
+          allowedEventIds: allowedList,
         };
 
         console.log(
-          "[@agentic-ai/vincent-policy-polymarket-policy/precheck] 🚫 POLICY PRECHECK DENYING REQUEST:"
+          `[${PKG}/precheck] 🚫 POLICY PRECHECK DENYING REQUEST:`
         );
         console.log(
-          "[@agentic-ai/vincent-policy-polymarket-policy/precheck] 🚫 Deny result:",
+          `[${PKG}/precheck] 🚫 Deny result:`,
           JSON.stringify(denyResult, null, 2)
         );
-        console.log(
-          "[@agentic-ai/vincent-policy-polymarket-policy/precheck] 🚫 Current count:",
-          limitCheck.currentCount
-        );
-        console.log(
-          "[@agentic-ai/vincent-policy-polymarket-policy/precheck] 🚫 Max sends:",
-          Number(maxSends)
-        );
-        console.log(
-          "[@agentic-ai/vincent-policy-polymarket-policy/precheck] 🚫 Limit check result:",
-          JSON.stringify(limitCheck, null, 2)
-        );
-        console.log(
-          "[@agentic-ai/vincent-policy-polymarket-policy/precheck] 🚫 About to call deny() function..."
-        );
 
-        const denyResponse = deny(denyResult);
-        console.log(
-          "[@agentic-ai/vincent-policy-polymarket-policy/precheck] 🚫 POLICY PRECHECK DENY RESPONSE:",
-          JSON.stringify(denyResponse, null, 2)
-        );
-        return denyResponse;
+        return deny(denyResult);
       }
 
       const allowResult = {
-        currentCount: limitCheck.currentCount,
-        maxSends: Number(maxSends),
-        remainingSends: limitCheck.remainingSends,
-        timeWindowSeconds: Number(timeWindowSeconds),
+        eventId,
+        eventIdValid: true,
       };
 
-      console.log(
-        "[SendLimitPolicy/precheck] ✅ POLICY PRECHECK ALLOWING REQUEST:"
-      );
-      console.log(
-        "[SendLimitPolicy/precheck] ✅ Allow result:",
-        JSON.stringify(allowResult, null, 2)
-      );
-      console.log(
-        "[SendLimitPolicy/precheck] ✅ Current count:",
-        limitCheck.currentCount
-      );
-      console.log("[SendLimitPolicy/precheck] ✅ Max sends:", Number(maxSends));
-      console.log(
-        "[SendLimitPolicy/precheck] ✅ Remaining sends:",
-        limitCheck.remainingSends
-      );
-
-      const allowResponse = allow(allowResult);
-      console.log(
-        "[SendLimitPolicy/precheck] ✅ POLICY PRECHECK ALLOW RESPONSE:",
-        JSON.stringify(allowResponse, null, 2)
-      );
-      return allowResponse;
+      return allow(allowResult);
     } catch (error) {
-      console.error("[SendLimitPolicy/precheck] Error in precheck:", error);
+      console.error(`[${PKG}/precheck] error`, error);
       return deny({
-        reason: `Policy error: ${error instanceof Error ? error.message : "Unknown error"
-          }`,
-        currentCount: 0,
-        maxSends: Number(maxSends),
-        secondsUntilReset: 0,
+        reason: `Policy error: ${error instanceof Error ? error.message : "Unknown error"}`,
+        eventId,
+        allowedEventIds: allowedEventIds || DEFAULT_ALLOWED_EVENT_IDS,
       });
     }
   },
@@ -146,166 +94,134 @@ export const vincentPolicy = createVincentPolicy({
     { abilityParams, userParams },
     { allow, deny, appId, delegation: { delegatorPkpInfo } }
   ) => {
-    console.log("[@agentic-ai/vincent-policy-polymarket-policy/evaluate] Evaluating send limit policy", {
+    console.log(`[${PKG}/evaluate] 🔍 POLICY EVALUATE CALLED`);
+    console.log(`[${PKG}/evaluate] Evaluating Polymarket policy`, {
       abilityParams,
       userParams,
     });
 
-    // Only use what we actually need - no defaults in policy logic
-    const { maxSends, timeWindowSeconds } = userParams;
-    const { ethAddress } = delegatorPkpInfo;
+    const { eventId, endDate, volume1yr } = abilityParams;
+    const { allowedEventIds, maxDaysUntilEnd, minVolume } = userParams;
 
-    const checkSendResponse = await Lit.Actions.runOnce(
-      { waitForResponse: true, name: "checkSendLimit" },
-      async () => {
-        try {
-          // Convert BigInt to number for helper function
-          const maxSendsNum = Number(maxSends);
-          const timeWindowSecondsNum = Number(timeWindowSeconds);
-
-          const limitCheck = await checkSendLimit(
-            ethAddress,
-            maxSendsNum,
-            timeWindowSecondsNum
-          );
-
-          return JSON.stringify({
-            status: "success",
-            ...limitCheck,
-          });
-        } catch (error) {
-          return JSON.stringify({
-            status: "error",
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
+    try {
+      // Validate event ID
+      const eventIdValid = validateEventId(eventId, allowedEventIds);
+      if (!eventIdValid) {
+        const allowedList = allowedEventIds || DEFAULT_ALLOWED_EVENT_IDS;
+        return deny({
+          reason: getValidationFailureReason('eventId', eventId, allowedList),
+          eventId,
+          failedCheck: 'eventId',
+          details: {
+            actual: eventId,
+            required: allowedList,
+          },
+        });
       }
-    );
 
-    const parsedResponse = JSON.parse(checkSendResponse);
-    if (parsedResponse.status === "error") {
+      // Validate end date
+      const endDateValidation = validateEndDate(endDate, maxDaysUntilEnd);
+      if (!endDateValidation.valid) {
+        return deny({
+          reason: getValidationFailureReason('endDate', endDateValidation.daysUntilEnd, maxDaysUntilEnd),
+          eventId,
+          failedCheck: 'endDate',
+          details: {
+            actual: endDateValidation.daysUntilEnd,
+            required: maxDaysUntilEnd,
+          },
+        });
+      }
+
+      // Validate volume
+      const volumeValid = validateVolume(volume1yr, minVolume);
+      if (!volumeValid) {
+        return deny({
+          reason: getValidationFailureReason('volume', volume1yr, minVolume),
+          eventId,
+          failedCheck: 'volume',
+          details: {
+            actual: volume1yr,
+            required: minVolume,
+          },
+        });
+      }
+
+      // All validations passed
+      const allowResult = {
+        eventId,
+        endDate,
+        volume1yr,
+        daysUntilEnd: endDateValidation.daysUntilEnd,
+        validations: {
+          eventIdValid: true,
+          endDateValid: true,
+          volumeValid: true,
+        },
+      };
+
+      console.log(
+        `[${PKG}/evaluate] ✅ All validations passed`
+      );
+      console.log(
+        `[${PKG}/evaluate] ✅ Allow result:`,
+        JSON.stringify(allowResult, null, 2)
+      );
+
+      return allow(allowResult);
+    } catch (error) {
+      console.error(`[${PKG}/evaluate] Error in evaluate:`, error);
       return deny({
-        reason: `Error checking send limit: ${parsedResponse.error} (evaluate)`,
-        currentCount: 0,
-        maxSends: Number(maxSends),
-        secondsUntilReset: 0,
-        timeWindowSeconds: Number(timeWindowSeconds),
+        reason: `Policy error during evaluation: ${error instanceof Error ? error.message : "Unknown error"}`,
+        eventId,
+        failedCheck: 'eventId', // Default to eventId for errors
+        details: {
+          actual: eventId,
+          required: "Error occurred",
+        },
       });
     }
-
-    const { allowed, currentCount, remainingSends, secondsUntilReset } =
-      parsedResponse;
-
-    if (!allowed) {
-      return deny({
-        reason: `Send limit exceeded during evaluation. Maximum ${Number(
-          maxSends
-        )} sends per ${Number(
-          timeWindowSeconds
-        )} seconds. Try again in ${secondsUntilReset} seconds.`,
-        currentCount,
-        maxSends: Number(maxSends),
-        secondsUntilReset: secondsUntilReset || 0,
-      });
-    }
-
-    console.log("[@agentic-ai/vincent-policy-polymarket-policy/evaluate] Evaluated send limit policy", {
-      currentCount,
-      maxSends,
-      remainingSends,
-    });
-
-    return allow({
-      currentCount,
-      maxSends: Number(maxSends),
-      remainingSends,
-      timeWindowSeconds: Number(timeWindowSeconds),
-    });
   },
 
   commit: async (
-    { currentCount, maxSends, timeWindowSeconds },
-    { allow, appId, delegation: { delegatorPkpInfo } }
+    { eventId, endDate, volume1yr, daysUntilEnd },
+    { allow, deny, appId, delegation: { delegatorPkpInfo } }
   ) => {
     const { ethAddress } = delegatorPkpInfo;
 
-    console.log("[@agentic-ai/vincent-policy-polymarket-policy/commit] 🚀 IM COMMITING!");
-
-    // Check if we need to reset the counter first
-    const checkResponse = await checkSendLimit(
+    console.log(`[${PKG}/commit] 🚀 POLICY COMMIT CALLED`);
+    console.log(`[${PKG}/commit] Committing Polymarket policy`, {
+      eventId,
+      endDate,
+      volume1yr,
+      daysUntilEnd,
       ethAddress,
-      maxSends,
-      Number(timeWindowSeconds)
-    );
-
-    if (checkResponse.shouldReset) {
-      console.log(
-        `[@agentic-ai/vincent-policy-polymarket-policy/commit] Resetting counter for ${ethAddress} due to time 
-      window expiration`
-      );
-      try {
-        await resetSendCounter(ethAddress, delegatorPkpInfo.publicKey);
-        console.log(
-          `[@agentic-ai/vincent-policy-polymarket-policy/commit] Counter reset successful for ${ethAddress}`
-        );
-      } catch (error) {
-        console.warn(`Counter reset failed for ${ethAddress}:`, error);
-        // Continue anyway, the counter will still work
-      }
-    }
+      appId,
+    });
 
     try {
-      // Record the send to the smart contract
+      // In the commit phase, we've already validated everything
+      // Just log the successful validation and return success
+      const successMessage = `Polymarket bet validated successfully for event ${eventId}. ` +
+        `Volume: $${volume1yr.toLocaleString()}, Days until end: ${daysUntilEnd}`;
+
       console.log(
-        `[@agentic-ai/vincent-policy-polymarket-policy/commit] Recording send to contract for ${ethAddress} (appId: ${appId})`
+        `[${PKG}/commit] ✅ ${successMessage}`
       );
-
-      // Execute the contract call to increment the counter directly
-      console.log(
-        `[@agentic-ai/vincent-policy-polymarket-policy/commit] Calling incrementByAddress(${ethAddress}) on contract ${counterSignatures.address}`
-      );
-
-      const provider = new ethers.providers.JsonRpcProvider(
-        "https://yellowstone-rpc.litprotocol.com/"
-      );
-
-      // Call contract directly without Lit.Actions.runOnce wrapper
-      const txHash = await laUtils.transaction.handler.contractCall({
-        provider,
-        pkpPublicKey: delegatorPkpInfo.publicKey,
-        callerAddress: ethAddress,
-        abi: [counterSignatures.methods.increment],
-        contractAddress: counterSignatures.address,
-        functionName: "increment",
-        args: [],
-        overrides: {
-          gasLimit: 100000,
-        },
-      });
-
-      const newCount = currentCount + 1;
-      const remainingSends = Number(maxSends) - newCount;
-
-      console.log("[@agentic-ai/vincent-policy-polymarket-policy/commit] Policy commit successful", {
-        ethAddress,
-        newCount,
-        maxSends,
-        remainingSends,
-        txHash,
-      });
 
       return allow({
-        recorded: true,
-        newCount,
-        remainingSends: Math.max(0, remainingSends),
+        success: true,
+        eventId,
+        message: successMessage,
       });
     } catch (error) {
-      console.error("[@agentic-ai/vincent-policy-polymarket-policy/commit] Error in commit phase:", error);
-      // Still return success since the transaction itself succeeded
+      console.error(`[${PKG}/commit] Error in commit phase:`, error);
+
+      // Even if there's an error in commit, we typically allow since validation passed
       return allow({
-        recorded: false,
-        newCount: currentCount + 1,
-        remainingSends: Math.max(0, Number(maxSends) - currentCount - 1),
+        success: false,
+        eventId,
+        message: `Commit completed with warning: ${error instanceof Error ? error.message : "Unknown error"}`,
       });
     }
   },

@@ -1,3 +1,43 @@
 {
-  "ipfsCid": "QmR29wT3rRTm1ENPsk3QwxBXv13uVNXGpDsC1avon3D9RZ"
+  "jsonSchema": {
+    "type": "object",
+    "properties": {
+      "allowedEventIds": {
+        "type": "array",
+        "title": "Allowed Event IDs",
+        "description": "List of allowed Polymarket event IDs",
+        "items": {
+          "type": "string"
+        }
+      },
+      "maxDaysUntilEnd": {
+        "type": "number",
+        "title": "Max Days Until End",
+        "description": "Maximum number of days until the event end date is allowed"
+      },
+      "minVolume": {
+        "type": "number",
+        "title": "Minimum 1y Volume (USD)",
+        "description": "Minimum 1-year trading volume required"
+      }
+    },
+    "required": [
+      "maxDaysUntilEnd",
+      "minVolume"
+    ]
+  },
+  "uiSchema": {
+    "allowedEventIds": {
+      "items": {
+        "ui:placeholder": "Enter an allowed event ID"
+      }
+    },
+    "maxDaysUntilEnd": {
+      "ui:placeholder": "e.g., 30"
+    },
+    "minVolume": {
+      "ui:placeholder": "e.g., 100000"
+    }
+  },
+  "ipfsCid": "QmYmNW7Fc8QPHkChaJY5Yw1ZKYcrMocMmH7ZGKLB2qNbBc"
 }

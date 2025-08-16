@@ -1,6 +1,6 @@
 {
   "name": "@bridgewager/vincent-policy-polymarket-policy",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "A Vincent policy created with @lit-protocol/vincent-scaffold-sdk",
   "main": "dist/index.js",
   "module": "dist/index.js",

@@ -4,36 +4,33 @@ import { z } from "zod";
  * Ability parameters schema - matches the ability this policy works with
  */
 export const abilityParamsSchema = z.object({
-  to: z.string().min(1, "Recipient address cannot be empty"),
-  amount: z.string().min(1, "Amount cannot be empty"),
+  eventId: z.string(),
+  endDate: z.string(),
+  volume1yr: z.number(),
 });
 
 /**
  * User parameters schema - policy configuration set by the user
  */
 export const userParamsSchema = z.object({
-  maxSends: z.number().min(1).max(100).default(2),
-  timeWindowSeconds: z.number().min(1).max(604800).default(10), // Default to 10 seconds for testing
+  allowedEventIds: z.array(z.string()).optional(),
+  maxDaysUntilEnd: z.number(),
+  minVolume: z.number(),
 });
 
 /**
  * Commit parameters schema - data passed to commit phase
  */
 export const commitParamsSchema = z.object({
-  currentCount: z.number(),
-  maxSends: z.number(),
-  remainingSends: z.number(),
-  timeWindowSeconds: z.number(),
+  // Not used directly in Polymarket policy commit step, kept for compatibility if needed
 });
 
 /**
  * Precheck allow result schema
  */
 export const precheckAllowResultSchema = z.object({
-  currentCount: z.number(),
-  maxSends: z.number(),
-  remainingSends: z.number(),
-  timeWindowSeconds: z.number(),
+  eventId: z.string(),
+  eventIdValid: z.boolean(),
 });
 
 /**
@@ -41,19 +38,23 @@ export const precheckAllowResultSchema = z.object({
  */
 export const precheckDenyResultSchema = z.object({
   reason: z.string(),
-  currentCount: z.number(),
-  maxSends: z.number(),
-  secondsUntilReset: z.number(),
+  eventId: z.string(),
+  allowedEventIds: z.array(z.string()),
 });
 
 /**
  * Evaluate allow result schema
  */
 export const evalAllowResultSchema = z.object({
-  currentCount: z.number(),
-  maxSends: z.number(),
-  remainingSends: z.number(),
-  timeWindowSeconds: z.number(),
+  eventId: z.string(),
+  endDate: z.string(),
+  volume1yr: z.number(),
+  daysUntilEnd: z.number(),
+  validations: z.object({
+    eventIdValid: z.boolean(),
+    endDateValid: z.boolean(),
+    volumeValid: z.boolean(),
+  }),
 });
 
 /**
@@ -61,19 +62,21 @@ export const evalAllowResultSchema = z.object({
  */
 export const evalDenyResultSchema = z.object({
   reason: z.string(),
-  currentCount: z.number(),
-  maxSends: z.number(),
-  secondsUntilReset: z.number(),
-  timeWindowSeconds: z.number(),
+  eventId: z.string(),
+  failedCheck: z.enum(["eventId", "endDate", "volume"]),
+  details: z.object({
+    actual: z.union([z.number(), z.string()]),
+    required: z.union([z.number(), z.string(), z.array(z.string())]),
+  }),
 });
 
 /**
  * Commit allow result schema
  */
 export const commitAllowResultSchema = z.object({
-  recorded: z.boolean(),
-  newCount: z.number(),
-  remainingSends: z.number(),
+  success: z.boolean(),
+  eventId: z.string(),
+  message: z.string(),
 });
 
 /**
