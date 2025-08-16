@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSignInWithEmail, useVerifyEmailOTP } from '@coinbase/cdp-hooks';
 
@@ -47,15 +48,10 @@ export function LoginForm({
     setError(null);
 
     try {
-      const { user, isNewUser } = await verifyEmailOTP({
+      await verifyEmailOTP({
         flowId,
         otp,
       });
-
-      console.log('Signed in user:', user);
-      console.log('User EVM address:', user.evmAccounts?.[0]);
-      console.log('Is new user:', isNewUser);
-
       router.push('/');
     } catch (error) {
       console.error('Sign in failed:', error);
@@ -74,7 +70,7 @@ export function LoginForm({
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <div className="flex flex-col items-center gap-2">
-        <a href="#" className="flex flex-col items-center gap-2 font-medium">
+        <Link href="/" className="flex flex-col items-center gap-2 font-medium">
           <div className="flex items-center justify-center rounded-md">
             <Image
               src="/ray.png"
@@ -84,8 +80,8 @@ export function LoginForm({
             />
           </div>
           <span className="sr-only">Bridgewager Associates</span>
-        </a>
-        <h1 className="text-xl font-bold">Bridgewager Associates</h1>
+        </Link>
+        <h1 className="text-2xl font-bold">Bridgewager Associates</h1>
       </div>
 
       {!flowId ? (
@@ -152,8 +148,9 @@ export function LoginForm({
       )}
 
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{' '}
-        and <a href="#">Privacy Policy</a>.
+        By clicking continue, you agree to our{' '}
+        <Link href="/">Terms of Service</Link> and{' '}
+        <Link href="/">Privacy Policy</Link>.
       </div>
     </div>
   );

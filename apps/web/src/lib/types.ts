@@ -1,5 +1,26 @@
 import { LucideIcon } from 'lucide-react';
 
+export type TableRow = {
+  getValue: (key: string) => string | number;
+};
+
+export type TableCell = {
+  row: TableRow;
+};
+
+export type SessionTokenRequest = {
+  addresses: Array<{
+    address: string;
+    blockchains: string[];
+  }>;
+  assets?: string[];
+};
+
+export type SessionTokenResponse = {
+  token: string;
+  channel_id?: string;
+};
+
 export type Agent = {
   id: string;
   name: string;

@@ -1,12 +1,12 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useCurrentUser } from '@coinbase/cdp-hooks';
 import {
   IconAlertTriangle,
   IconChartPie,
   IconDatabase,
-  IconInnerShadowTop,
   IconListDetails,
   IconReport,
   IconShield,
@@ -35,7 +35,7 @@ const data = {
   navMain: [
     {
       title: 'Research Analyst',
-      url: '#',
+      url: '/team/research-analyst',
       icon: IconListDetails,
       items: [
         {
@@ -54,7 +54,7 @@ const data = {
     },
     {
       title: 'Portfolio Manager',
-      url: '#',
+      url: '/team/portfolio-manager',
       icon: IconChartPie,
       items: [
         {
@@ -73,7 +73,7 @@ const data = {
     },
     {
       title: 'Trader',
-      url: '#',
+      url: '/team/trader',
       icon: IconTrendingUp,
       items: [
         {
@@ -92,7 +92,7 @@ const data = {
     },
     {
       title: 'Compliance Officer',
-      url: '#',
+      url: '/team/compliance-officer',
       icon: IconShield,
       items: [
         {
@@ -141,12 +141,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
+              <Link href="/">
                 <span className="text-base font-semibold">
                   Bridgewager Associates
                 </span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
