@@ -2,14 +2,20 @@ import { tool } from '@langchain/core/tools';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Tusky } from '@tusky-io/ts-sdk';
+import NewsAPI from 'newsapi';
+import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 @Injectable()
 export class ToolsService {
-  private readonly tusky = new Tusky();
+  private readonly tusky: Tusky;
+  private readonly NewsAPI: NewsAPI;
   private readonly logger = new Logger(ToolsService.name);
 
   constructor(private readonly configService: ConfigService) {
+    this.NewsAPI = new NewsAPI(
+      this.configService.getOrThrow<string>('NEWS_API_KEY'),
+    );
     this.tusky = new Tusky({
       apiKey: this.configService.getOrThrow<string>('TUSKY_API_KEY'),
     });
@@ -18,12 +24,13 @@ export class ToolsService {
   uploadResearch() {
     return tool(
       async (args) => {
+        const uuid = uuidv4();
         return await this.tusky.file.upload(
           this.configService.getOrThrow<string>('TUSKY_VAULT_ID'),
-          new Blob([args.research]),
+          new Blob([args.research] as BlobPart[]),
           {
-            name: args.research,
-            mimeType: 'text/plain',
+            name: `${uuid}.md`,
+            mimeType: 'text/markdown',
           },
         );
       },
@@ -37,21 +44,18 @@ export class ToolsService {
     );
   }
 
-  webSearch() {
+  searchNews() {
     return tool(
-      async () => {
-        return (
-          'Here are the headcounts for each of the FAANG companies in 2024:\n' +
-          '1. **Facebook (Meta)**: 67,317 employees.\n' +
-          '2. **Apple**: 164,000 employees.\n' +
-          '3. **Amazon**: 1,551,000 employees.\n' +
-          '4. **Netflix**: 14,000 employees.\n' +
-          '5. **Google (Alphabet)**: 181,269 employees.'
-        );
+      async (args) => {
+        return this.NewsAPI.v2.everything({
+          q: args.query,
+          language: 'en',
+          sortBy: 'relevancy',
+        });
       },
       {
-        name: 'web_search',
-        description: 'Search the web for information.',
+        name: 'search_news',
+        description: 'Search the web for news.',
         schema: z.object({
           query: z.string(),
         }),
