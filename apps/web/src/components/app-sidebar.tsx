@@ -5,7 +5,6 @@ import { useCurrentUser } from '@coinbase/cdp-hooks';
 import {
   IconCamera,
   IconChartBar,
-  IconDashboard,
   IconDatabase,
   IconFileAi,
   IconFileDescription,
@@ -38,27 +37,22 @@ const data = {
   },
   navMain: [
     {
-      title: 'Dashboard',
-      url: '#',
-      icon: IconDashboard,
-    },
-    {
-      title: 'Lifecycle',
+      title: 'Research Analyst',
       url: '#',
       icon: IconListDetails,
     },
     {
-      title: 'Analytics',
+      title: 'Compliance Officer',
       url: '#',
       icon: IconChartBar,
     },
     {
-      title: 'Projects',
+      title: 'Portfolio Manager',
       url: '#',
       icon: IconFolder,
     },
     {
-      title: 'Team',
+      title: 'Trader',
       url: '#',
       icon: IconUsers,
     },
