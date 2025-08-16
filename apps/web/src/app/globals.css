@@ -120,3 +120,113 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Financial Terminal Styling */
+  .hedge-fund-terminal {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  }
+  
+  .financial-number {
+    @apply font-mono tabular-nums;
+  }
+  
+  .pnl-positive {
+    @apply text-green-600 dark:text-green-400;
+  }
+  
+  .pnl-negative {
+    @apply text-red-600 dark:text-red-400;
+  }
+  
+  .risk-high {
+    @apply text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20;
+  }
+  
+  .risk-medium {
+    @apply text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/20;
+  }
+  
+  .risk-low {
+    @apply text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20;
+  }
+  
+  /* Enhanced dark mode for financial data */
+  .dark .hedge-fund-card {
+    @apply bg-gray-900/50 border-gray-800;
+  }
+  
+  .market-status-open {
+    @apply bg-green-100 text-green-800 dark:bg-green-950/20 dark:text-green-400;
+  }
+  
+  .market-status-pending {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-950/20 dark:text-yellow-400;
+  }
+  
+  .market-status-closed {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-950/20 dark:text-gray-400;
+  }
+  
+  /* Agent performance indicators */
+  .agent-active {
+    @apply bg-green-100 text-green-800 dark:bg-green-950/20 dark:text-green-400;
+  }
+  
+  .agent-training {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-950/20 dark:text-blue-400;
+  }
+  
+  .agent-inactive {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-950/20 dark:text-gray-400;
+  }
+  
+  /* Financial metrics styling */
+  .metric-card {
+    @apply transition-all duration-200 hover:shadow-lg hover:scale-[1.02];
+  }
+  
+  .dark .metric-card {
+    @apply hover:bg-gray-800/50;
+  }
+  
+  /* Chart enhancements for financial data */
+  .chart-tooltip {
+    @apply bg-background/95 backdrop-blur-sm border border-border/50 rounded-lg shadow-lg;
+  }
+  
+  /* Typography for financial data */
+  .hedge-fund-title {
+    @apply text-2xl font-bold tracking-tight text-foreground;
+  }
+  
+  .hedge-fund-subtitle {
+    @apply text-sm text-muted-foreground;
+  }
+  
+  .hedge-fund-metric {
+    @apply text-3xl font-bold tabular-nums;
+  }
+  
+  .hedge-fund-change {
+    @apply text-sm font-medium tabular-nums;
+  }
+  
+  /* Terminal-style scrollbars for dark mode */
+  .dark ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-gray-900;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-gray-600 rounded;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+}

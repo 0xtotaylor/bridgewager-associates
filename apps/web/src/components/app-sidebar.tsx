@@ -3,17 +3,19 @@
 import * as React from 'react';
 import { useCurrentUser } from '@coinbase/cdp-hooks';
 import {
-  IconCamera,
   IconChartBar,
   IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
   IconInnerShadowTop,
   IconListDetails,
   IconReport,
   IconUsers,
+  IconChartPie,
+  IconShield,
+  IconBriefcase,
+  IconTrendingUp,
+  IconTarget,
+  IconActivity,
+  IconAlertTriangle,
 } from '@tabler/icons-react';
 
 import {
@@ -40,66 +42,74 @@ const data = {
       title: 'Research Analyst',
       url: '#',
       icon: IconListDetails,
-    },
-    {
-      title: 'Compliance Officer',
-      url: '#',
-      icon: IconChartBar,
+      items: [
+        {
+          title: 'Calibration Charts',
+          url: '#',
+        },
+        {
+          title: 'Forecast Analysis',
+          url: '#',
+        },
+        {
+          title: 'Agent Performance',
+          url: '#',
+        },
+      ],
     },
     {
       title: 'Portfolio Manager',
       url: '#',
-      icon: IconFolder,
+      icon: IconChartPie,
+      items: [
+        {
+          title: 'Capital Allocation',
+          url: '#',
+        },
+        {
+          title: 'Risk Attribution',
+          url: '#',
+        },
+        {
+          title: 'Performance Analytics',
+          url: '#',
+        },
+      ],
     },
     {
       title: 'Trader',
       url: '#',
-      icon: IconUsers,
-    },
-  ],
-  navClouds: [
-    {
-      title: 'Capture',
-      icon: IconCamera,
-      isActive: true,
-      url: '#',
+      icon: IconTrendingUp,
       items: [
         {
-          title: 'Active Proposals',
+          title: 'Open Positions',
           url: '#',
         },
         {
-          title: 'Archived',
+          title: 'Market Opportunities',
+          url: '#',
+        },
+        {
+          title: 'Execution Tickets',
           url: '#',
         },
       ],
     },
     {
-      title: 'Proposal',
-      icon: IconFileDescription,
+      title: 'Compliance Officer',
       url: '#',
+      icon: IconShield,
       items: [
         {
-          title: 'Active Proposals',
+          title: 'Risk Limits',
           url: '#',
         },
         {
-          title: 'Archived',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Prompts',
-      icon: IconFileAi,
-      url: '#',
-      items: [
-        {
-          title: 'Active Proposals',
+          title: 'Exposure Monitoring',
           url: '#',
         },
         {
-          title: 'Archived',
+          title: 'Audit Logs',
           url: '#',
         },
       ],
@@ -107,19 +117,19 @@ const data = {
   ],
   documents: [
     {
-      name: 'Data Library',
+      name: 'Market Data',
       url: '#',
       icon: IconDatabase,
     },
     {
-      name: 'Reports',
+      name: 'Performance Reports',
       url: '#',
       icon: IconReport,
     },
     {
-      name: 'Word Assistant',
+      name: 'Risk Analytics',
       url: '#',
-      icon: IconFileWord,
+      icon: IconAlertTriangle,
     },
   ],
 };
