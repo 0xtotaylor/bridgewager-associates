@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSignInWithEmail, useVerifyEmailOTP } from '@coinbase/cdp-hooks';
-import { GalleryVerticalEnd } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -75,8 +75,13 @@ export function LoginForm({
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <div className="flex flex-col items-center gap-2">
         <a href="#" className="flex flex-col items-center gap-2 font-medium">
-          <div className="flex size-8 items-center justify-center rounded-md">
-            <GalleryVerticalEnd className="size-6" />
+          <div className="flex items-center justify-center rounded-md">
+            <Image
+              src="/ray.png"
+              alt="Bridgewager Associates"
+              width={250}
+              height={250}
+            />
           </div>
           <span className="sr-only">Bridgewager Associates</span>
         </a>
