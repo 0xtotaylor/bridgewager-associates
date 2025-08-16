@@ -2,82 +2,96 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Structure
+## Project Overview
 
-This is a Next.js 15 web application within a Turborepo monorepo. The web app is located at `/apps/web/` and uses:
+This is a Turborepo monorepo for Bridgewager Associates, a multi-agent hedge fund specializing in prediction markets. The project consists of:
 
-- **Framework**: Next.js 15 with App Router (`src/app/` directory)
-- **Styling**: Tailwind CSS v4 with custom CSS variables for theming
-- **TypeScript**: Strict configuration extending shared configs from `@repo/typescript-config`
-- **Fonts**: Geist Sans and Geist Mono from Google Fonts
-- **Development**: Turbopack for fast development builds
+- **Web App** (`apps/web`): Next.js 15 frontend with React 19, TypeScript, and Tailwind CSS
+- **API** (`apps/api`): NestJS backend API
+- **Shared Packages** (`packages/`): ESLint configs, TypeScript configs, and Jest configs
 
 ## Development Commands
 
-### Local Development
+### Root Level (from `/Users/totaylor/Developer/bridgewager-associates`)
+- `yarn dev` - Start all services in development mode
+- `yarn build` - Build all applications
+- `yarn test` - Run tests across all packages
+- `yarn test:e2e` - Run end-to-end tests
+- `yarn lint` - Lint all packages
+- `yarn format` - Format code with Prettier
 
-```bash
-# Start development server (runs on port 3500 with Turbopack)
-npm run dev
-# or from monorepo root
-yarn dev
+### Web App (`apps/web`)
+- `yarn dev` - Start Next.js development server on port 3500 with Turbopack
+- `yarn build` - Build Next.js production bundle
+- `yarn start` - Start production server
+- `yarn lint` - Run ESLint with zero warnings policy
+- `yarn check-types` - Run TypeScript type checking without emitting
 
-# Build for production
-npm run build
-# or from monorepo root
-yarn build
-```
+### API (`apps/api`)
+- `yarn dev` - Start NestJS in watch mode
+- `yarn build` - Build NestJS application
+- `yarn start` - Start production server
+- `yarn start:debug` - Start with debug mode and watch
+- `yarn start:prod` - Start production build
+- `yarn test` - Run Jest unit tests
+- `yarn test:watch` - Run tests in watch mode
+- `yarn test:debug` - Run tests with debugger
+- `yarn test:e2e` - Run end-to-end tests
+- `yarn lint` - Lint TypeScript files
 
-### Code Quality
+## Architecture
 
-```bash
-# Lint with zero warnings tolerance
-npm run lint
+### Web Application Structure
+- **Framework**: Next.js 15 with App Router, React Server Components
+- **Styling**: Tailwind CSS v4 with shadcn/ui components
+- **UI Components**: Built with Radix UI primitives and shadcn/ui
+- **Icons**: Tabler Icons and Lucide React
+- **Blockchain**: Coinbase CDP SDK for Web3 functionality with OnchainKit
+- **Theme**: Supports dark/light mode with next-themes
+- **Data Tables**: TanStack React Table for complex data display
+- **Charts**: Recharts for data visualization
 
-# Type checking only (no emit)
-npm run check-types
+### Key Dependencies
+- **Coinbase CDP**: `@coinbase/cdp-react`, `@coinbase/cdp-hooks`, `@coinbase/onchainkit` for blockchain integration
+- **UI Framework**: Radix UI components with class-variance-authority for styling variants
+- **State Management**: React hooks and context (via CDP providers)
+- **Forms**: Zod for schema validation
+- **Animations**: Built-in CSS animations with tw-animate-css
 
-# Format code (from monorepo root)
-yarn format
-```
+### API Structure
+- **Framework**: NestJS with TypeScript
+- **Testing**: Jest with Supertest for e2e testing
+- **Architecture**: Standard NestJS module structure
 
-### Monorepo Commands
-
-From the repository root (`/Users/totaylor/Developer/bridgewager-associates/`):
-
-- `yarn dev` - Start all apps in development mode
-- `yarn build` - Build all apps and packages
-- `yarn lint` - Lint all workspaces
-- `yarn test` - Run tests across all workspaces
-- `yarn format` - Format all TypeScript, TSX, and Markdown files
-
-## Architecture Notes
-
-### Styling System
-
-- Uses Tailwind CSS v4 with CSS variables for theming
-- Dark mode support via `prefers-color-scheme` media query
-- Custom color variables defined in `globals.css`:
-  - `--background` and `--foreground` for adaptive theming
-  - Font variables from Geist font family
-
-### Configuration
-
-- **ESLint**: Uses shared config from `@repo/eslint-config/next-js`
-- **TypeScript**: Extends `@repo/typescript-config/nextjs.json`
-- **PostCSS**: Configured for Tailwind CSS v4 processing
-- **Turborepo**: Orchestrates monorepo builds with dependency management
-
-### File Structure
-
+### Component Architecture
+The web app follows a clear component hierarchy:
 - `src/app/` - Next.js App Router pages and layouts
-- `src/app/globals.css` - Global styles with Tailwind and theme variables
-- `public/` - Static assets (SVG icons)
-- Configuration files at root level for Next.js, TypeScript, ESLint, and PostCSS
+- `src/components/` - Reusable components
+- `src/components/ui/` - shadcn/ui base components
+- `src/lib/` - Utility functions and configurations
+- `src/hooks/` - Custom React hooks
 
-### Development Environment
+### Key Features
+- Multi-agent hedge fund dashboard with role-based navigation (Research Analyst, Compliance Officer, Portfolio Manager, Trader)
+- Blockchain integration for prediction markets
+- Data visualization with interactive charts
+- Document management system
+- User authentication via Coinbase CDP
 
-- Node.js 18+ required
-- Yarn workspace package manager
-- Development server runs on port 3500
-- Turbopack enabled for faster builds in development
+## Configuration Files
+- `components.json` - shadcn/ui configuration with New York style
+- `turbo.json` - Turborepo task configuration
+- `tsconfig.json` - TypeScript configuration per package
+- Shared configs in `packages/` for consistent tooling
+
+## Environment Setup
+The web app requires:
+- `NEXT_PUBLIC_CDP_PROJECT_ID` - Coinbase CDP project ID
+- `NEXT_PUBLIC_ONCHAINKIT_API_KEY` - OnchainKit API key for blockchain functionality
+
+## Development Notes
+- Uses Yarn as package manager
+- All packages share consistent ESLint, TypeScript, and Jest configurations
+- Turborepo handles build dependencies and caching
+- Next.js runs on port 3500 in development
+- TypeScript strict mode enabled across all packages
