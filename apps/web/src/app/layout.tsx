@@ -17,8 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Bridgewager Associates',
-  description:
-    'A multi-agent hedge fund that specializes in prediction markets.',
+  description: 'An agentic hedge fund that specializes in prediction markets.',
 };
 
 export default function RootLayout({
