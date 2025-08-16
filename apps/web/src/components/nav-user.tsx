@@ -64,10 +64,6 @@ export function NavUser({ user }: { user: User }) {
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
                 <IconNotification />
                 Notifications
               </DropdownMenuItem>

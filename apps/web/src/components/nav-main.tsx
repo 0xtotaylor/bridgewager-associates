@@ -1,6 +1,12 @@
 'use client';
 
-import { IconCirclePlusFilled, IconMail, type Icon } from '@tabler/icons-react';
+import { useEvmAddress } from '@coinbase/cdp-hooks';
+import { getOnrampBuyUrl } from '@coinbase/onchainkit/fund';
+import {
+  IconCirclePlusFilled,
+  IconCurrencyDollar,
+  type Icon,
+} from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +26,17 @@ export function NavMain({
     icon?: Icon;
   }[];
 }) {
+  const { evmAddress } = useEvmAddress();
+
+  const onrampBuyUrl = getOnrampBuyUrl({
+    projectId: process.env.NEXT_PUBLIC_CDP_PROJECT_ID ?? '',
+    addresses: { [evmAddress ?? '']: ['base'] },
+    assets: ['USDC'],
+    presetFiatAmount: 20,
+    fiatCurrency: 'USD',
+    redirectUrl: window.location.origin,
+  });
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -36,9 +53,12 @@ export function NavMain({
               size="icon"
               className="size-8 group-data-[collapsible=icon]:opacity-0"
               variant="outline"
+              asChild
             >
-              <IconMail />
-              <span className="sr-only">Inbox</span>
+              <a href={onrampBuyUrl} target="_blank" rel="noopener noreferrer">
+                <IconCurrencyDollar />
+                <span className="sr-only">Dollar</span>
+              </a>
             </Button>
           </SidebarMenuItem>
         </SidebarMenu>
