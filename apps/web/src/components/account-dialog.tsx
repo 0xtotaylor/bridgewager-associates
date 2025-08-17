@@ -118,6 +118,14 @@ export function AccountDialog({ open, onOpenChange }: AccountDialogProps) {
           <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              window.location.href = 'https://dashboard.heyvincent.ai/user/appId/7280666305/connect?redirectUri=https%3A%2F%2Fbridgewager-associates-web.vercel.app%2Fresearch-analyst';
+            }}
+          >
+            Lock Preferences
+          </Button>
           <Button onClick={handleSave}>
             Save Preferences
           </Button>
