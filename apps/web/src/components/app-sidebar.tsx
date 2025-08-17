@@ -10,7 +10,6 @@ import {
   IconListDetails,
   IconReport,
   IconShield,
-  IconTrendingUp,
 } from '@tabler/icons-react';
 
 import {

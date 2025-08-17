@@ -8,12 +8,12 @@ import {
   IconCurrencyDollar,
   IconPercentage,
   IconShield,
-  IconTarget,
   IconTrendingDown,
   IconTrendingUp,
   IconWallet,
 } from '@tabler/icons-react';
 
+import type { Position } from '@/lib/polymarket-portfolio';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -49,12 +49,11 @@ export function SectionCards({ agentType }: { agentType?: string }) {
     // Fetch portfolio metrics for all agent types
     const fetchPortfolioMetrics = async () => {
       try {
-        const { getUserPositions, getUserHoldings, getUserUSDCBalance } = await import(
-          '@/lib/polymarket-portfolio'
-        );
+        const { getUserPositions, getUserHoldings, getUserUSDCBalance } =
+          await import('@/lib/polymarket-portfolio');
 
         const userAddress = '0x4bA01fF1DEfA6948a801d3711892b9c00F170447';
-        
+
         // Get holdings value and USDC balance in parallel
         const [holdings, positions, usdcData] = await Promise.all([
           getUserHoldings(userAddress),
@@ -62,19 +61,31 @@ export function SectionCards({ agentType }: { agentType?: string }) {
             limit: 100,
             sortBy: 'CURRENT',
           }),
-          getUserUSDCBalance(userAddress)
+          getUserUSDCBalance(userAddress),
         ]);
-        
+
         const totalValue = holdings[0]?.value || 0;
         const usdcBalance = parseFloat(usdcData.display);
-        
+
         // Calculate metrics
-        const totalPnL = positions.reduce((sum: number, pos: any) => sum + pos.cashPnl, 0);
-        const totalInitial = positions.reduce((sum: number, pos: any) => sum + pos.initialValue, 0);
-        const totalPnLPercent = totalInitial > 0 ? (totalPnL / totalInitial) * 100 : 0;
-        const winningPositions = positions.filter((pos: any) => pos.cashPnl > 0).length;
-        const winRate = positions.length > 0 ? (winningPositions / positions.length) * 100 : 0;
-        
+        const totalPnL = positions.reduce(
+          (sum: number, pos: Position) => sum + pos.cashPnl,
+          0,
+        );
+        const totalInitial = positions.reduce(
+          (sum: number, pos: Position) => sum + pos.initialValue,
+          0,
+        );
+        const totalPnLPercent =
+          totalInitial > 0 ? (totalPnL / totalInitial) * 100 : 0;
+        const winningPositions = positions.filter(
+          (pos: Position) => pos.cashPnl > 0,
+        ).length;
+        const winRate =
+          positions.length > 0
+            ? (winningPositions / positions.length) * 100
+            : 0;
+
         setPortfolioMetrics({
           totalValue,
           totalPnL,
@@ -92,14 +103,6 @@ export function SectionCards({ agentType }: { agentType?: string }) {
 
     fetchPortfolioMetrics();
   }, [agentType]);
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
 
   const formatPercent = (value: number) => {
     return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
@@ -110,7 +113,10 @@ export function SectionCards({ agentType }: { agentType?: string }) {
     return (
       <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-6">
         {[...Array(6)].map((_, index) => (
-          <Card key={index} className="@container/card metric-card hedge-fund-card">
+          <Card
+            key={index}
+            className="@container/card metric-card hedge-fund-card"
+          >
             <CardHeader>
               <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
                 <Skeleton className="h-4 w-4 rounded" />
@@ -197,22 +203,34 @@ export function SectionCards({ agentType }: { agentType?: string }) {
             <IconChartLine className="size-4" />
             Total P&L
           </CardDescription>
-          <CardTitle className={`hedge-fund-metric @[250px]/card:text-3xl ${portfolioMetrics.totalPnL >= 0 ? 'pnl-positive' : 'pnl-negative'}`}>
-            {portfolioMetrics.totalPnL >= 0 ? '+' : ''}${portfolioMetrics.totalPnL.toFixed(2)}
+          <CardTitle
+            className={`hedge-fund-metric @[250px]/card:text-3xl ${portfolioMetrics.totalPnL >= 0 ? 'pnl-positive' : 'pnl-negative'}`}
+          >
+            {portfolioMetrics.totalPnL >= 0 ? '+' : ''}$
+            {portfolioMetrics.totalPnL.toFixed(2)}
           </CardTitle>
           <CardAction>
-            <Badge 
-              variant="outline" 
+            <Badge
+              variant="outline"
               className={`hedge-fund-change ${portfolioMetrics.totalPnL >= 0 ? 'pnl-positive' : 'pnl-negative'}`}
             >
-              {portfolioMetrics.totalPnL >= 0 ? <IconTrendingUp /> : <IconTrendingDown />}
+              {portfolioMetrics.totalPnL >= 0 ? (
+                <IconTrendingUp />
+              ) : (
+                <IconTrendingDown />
+              )}
               {formatPercent(portfolioMetrics.totalPnLPercent)}
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Realized + unrealized {portfolioMetrics.totalPnL >= 0 ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
+            Realized + unrealized{' '}
+            {portfolioMetrics.totalPnL >= 0 ? (
+              <IconTrendingUp className="size-4" />
+            ) : (
+              <IconTrendingDown className="size-4" />
+            )}
           </div>
           <div className="text-muted-foreground hedge-fund-subtitle">
             Total profit/loss across all positions
@@ -251,12 +269,14 @@ export function SectionCards({ agentType }: { agentType?: string }) {
             <IconPercentage className="size-4" />
             Win Rate
           </CardDescription>
-          <CardTitle className={`hedge-fund-metric @[250px]/card:text-3xl ${portfolioMetrics.winRate >= 50 ? 'pnl-positive' : 'pnl-negative'}`}>
+          <CardTitle
+            className={`hedge-fund-metric @[250px]/card:text-3xl ${portfolioMetrics.winRate >= 50 ? 'pnl-positive' : 'pnl-negative'}`}
+          >
             {portfolioMetrics.winRate.toFixed(1)}%
           </CardTitle>
           <CardAction>
-            <Badge 
-              variant="outline" 
+            <Badge
+              variant="outline"
               className={`hedge-fund-change ${portfolioMetrics.winRate >= 50 ? 'pnl-positive' : 'pnl-negative'}`}
             >
               {portfolioMetrics.winRate >= 50 ? 'Profitable' : 'Underwater'}
@@ -280,13 +300,14 @@ export function SectionCards({ agentType }: { agentType?: string }) {
             Risk Score
           </CardDescription>
           <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
-            {Math.abs(portfolioMetrics.totalPnLPercent) > 20 ? 'High' : Math.abs(portfolioMetrics.totalPnLPercent) > 10 ? 'Medium' : 'Low'}
+            {Math.abs(portfolioMetrics.totalPnLPercent) > 20
+              ? 'High'
+              : Math.abs(portfolioMetrics.totalPnLPercent) > 10
+                ? 'Medium'
+                : 'Low'}
           </CardTitle>
           <CardAction>
-            <Badge 
-              variant="outline" 
-              className="hedge-fund-change"
-            >
+            <Badge variant="outline" className="hedge-fund-change">
               <IconShield />
               Monitored
             </Badge>

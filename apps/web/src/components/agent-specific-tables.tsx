@@ -13,6 +13,7 @@ import {
 } from '@tabler/icons-react';
 
 import { fetchResearchReports } from '@/lib/polymarket-data';
+import type { Position, Trade } from '@/lib/polymarket-portfolio';
 import { createClient } from '@/lib/supabase';
 import { ResearchReport, TableCell } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
@@ -61,10 +62,10 @@ async function fetchAllWagersData(): Promise<TradeData[]> {
   try {
     // Dynamically import the Polymarket portfolio functions
     const { getUserTrades } = await import('@/lib/polymarket-portfolio');
-    
+
     // Using a known address for demo purposes - replace with actual user address
     const userAddress = '0x4bA01fF1DEfA6948a801d3711892b9c00F170447';
-    
+
     // Fetch all trades from Polymarket
     const trades = await getUserTrades(userAddress, {
       limit: 100,
@@ -72,7 +73,7 @@ async function fetchAllWagersData(): Promise<TradeData[]> {
     });
 
     // Transform to TradeData format
-    const transformedData: TradeData[] = trades.map((trade: any) => ({
+    const transformedData: TradeData[] = trades.map((trade: Trade) => ({
       title: trade.title,
       side: trade.side,
       size: trade.size,
@@ -95,20 +96,20 @@ async function fetchWagersData(): Promise<WagerData[]> {
   try {
     // Dynamically import the Polymarket portfolio functions
     const { getUserPositions } = await import('@/lib/polymarket-portfolio');
-    
+
     // Using a known address for demo purposes - replace with actual user address
     const userAddress = '0x4bA01fF1DEfA6948a801d3711892b9c00F170447';
-    
+
     // Fetch positions from Polymarket
     const positions = await getUserPositions(userAddress, {
       limit: 50,
       sortBy: 'CURRENT',
       sortDirection: 'DESC',
-      sizeThreshold: 0.01 // Only show positions with meaningful size
+      sizeThreshold: 0.01, // Only show positions with meaningful size
     });
 
     // Transform Polymarket positions to WagerData format
-    const transformedData: WagerData[] = positions.map((position: any) => {
+    const transformedData: WagerData[] = positions.map((position: Position) => {
       // Calculate risk level based on position metrics
       let riskLevel = 'Low';
       if (Math.abs(position.percentPnl) > 30) riskLevel = 'High';
@@ -131,15 +132,18 @@ async function fetchWagersData(): Promise<WagerData[]> {
     });
 
     // Calculate portfolio weights
-    const totalValue = transformedData.reduce((sum, item) => sum + item.allocation, 0);
-    transformedData.forEach(item => {
+    const totalValue = transformedData.reduce(
+      (sum, item) => sum + item.allocation,
+      0,
+    );
+    transformedData.forEach((item) => {
       item.weight = totalValue > 0 ? item.allocation / totalValue : 0;
     });
 
     return transformedData;
   } catch (err) {
     console.error('Error fetching Polymarket positions:', err);
-    
+
     // Fallback to Supabase data if Polymarket fails
     try {
       const { data, error } = await supabase
@@ -224,8 +228,12 @@ const getResearchAnalystColumns = (hasUrlParams: boolean) => [
       const locked = Boolean(row.getValue('locked'));
       return (
         <div className="flex items-center justify-center">
-          {!locked && hasUrlParams && <IconLockOpen className="h-4 w-4 text-green-600" />}
-          {!locked && !hasUrlParams && <IconLock className="h-4 w-4 text-red-600" />}
+          {!locked && hasUrlParams && (
+            <IconLockOpen className="h-4 w-4 text-green-600" />
+          )}
+          {!locked && !hasUrlParams && (
+            <IconLock className="h-4 w-4 text-red-600" />
+          )}
         </div>
       );
     },
@@ -270,8 +278,10 @@ const portfolioManagerColumns = [
     header: 'Market',
     cell: ({ row }: TableCell) => {
       const name = row.getValue('name') as string;
-      const outcome = (row.original as any).outcome as string;
-      const endDate = (row.original as any).endDate as string;
+      const outcome = (row.original as Record<string, unknown>)
+        .outcome as string;
+      const endDate = (row.original as Record<string, unknown>)
+        .endDate as string;
       return (
         <div className="flex flex-col">
           <span className="max-w-xs truncate font-medium">{name}</span>
@@ -287,8 +297,10 @@ const portfolioManagerColumns = [
     header: 'Position Size',
     cell: ({ row }: TableCell) => {
       const size = row.getValue('size') as number;
-      const avgPrice = (row.original as any).avgPrice as number;
-      const currentPrice = (row.original as any).currentPrice as number;
+      const avgPrice = (row.original as Record<string, unknown>)
+        .avgPrice as number;
+      const currentPrice = (row.original as Record<string, unknown>)
+        .currentPrice as number;
       return (
         <div className="flex flex-col">
           <span className="font-mono">{size?.toFixed(2)} shares</span>
@@ -304,7 +316,7 @@ const portfolioManagerColumns = [
     header: 'Current Value',
     cell: ({ row }: TableCell) => {
       const allocation = row.getValue('allocation') as number;
-      const weight = (row.original as any).weight as number;
+      const weight = (row.original as Record<string, unknown>).weight as number;
       return (
         <div className="flex flex-col">
           <span className="font-mono">${allocation?.toFixed(2)}</span>
@@ -320,15 +332,18 @@ const portfolioManagerColumns = [
     header: 'P&L',
     cell: ({ row }: TableCell) => {
       const pnl = row.getValue('pnl') as number;
-      const percentPnl = (row.original as any).percentPnl as number;
-      const realizedPnl = (row.original as any).realizedPnl as number;
+      const percentPnl = (row.original as Record<string, unknown>)
+        .percentPnl as number;
+      const realizedPnl = (row.original as Record<string, unknown>)
+        .realizedPnl as number;
       const isPositive = pnl >= 0;
       return (
         <div className="flex flex-col">
           <span
             className={`font-mono font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}
           >
-            {isPositive ? '+' : ''}${pnl?.toFixed(2)} ({percentPnl?.toFixed(1)}%)
+            {isPositive ? '+' : ''}${pnl?.toFixed(2)} ({percentPnl?.toFixed(1)}
+            %)
           </span>
           {realizedPnl && realizedPnl !== 0 && (
             <span className="text-xs text-muted-foreground">
@@ -361,8 +376,9 @@ const allWagersColumns = [
     header: 'Market',
     cell: ({ row }: TableCell) => {
       const title = row.getValue('title') as string;
-      const outcome = (row.original as any).outcome as string;
-      const slug = (row.original as any).slug as string;
+      const outcome = (row.original as Record<string, unknown>)
+        .outcome as string;
+      const slug = (row.original as Record<string, unknown>).slug as string;
       return (
         <div className="flex flex-col">
           <span className="max-w-xs truncate font-medium">{title}</span>
@@ -379,9 +395,7 @@ const allWagersColumns = [
     cell: ({ row }: TableCell) => {
       const side = row.getValue('side') as string;
       return (
-        <Badge variant={side === 'BUY' ? 'default' : 'secondary'}>
-          {side}
-        </Badge>
+        <Badge variant={side === 'BUY' ? 'default' : 'secondary'}>{side}</Badge>
       );
     },
   },
@@ -390,7 +404,7 @@ const allWagersColumns = [
     header: 'Size',
     cell: ({ row }: TableCell) => {
       const size = row.getValue('size') as number;
-      const price = (row.original as any).price as number;
+      const price = (row.original as Record<string, unknown>).price as number;
       const value = size * price;
       return (
         <div className="flex flex-col">
@@ -432,11 +446,7 @@ const allWagersColumns = [
     cell: ({ row }: TableCell) => {
       const hash = row.getValue('transactionHash') as string;
       const shortHash = hash ? `${hash.slice(0, 6)}...${hash.slice(-4)}` : '';
-      return (
-        <span className="font-mono text-xs">
-          {shortHash}
-        </span>
-      );
+      return <span className="font-mono text-xs">{shortHash}</span>;
     },
   },
 ];
@@ -654,7 +664,10 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
         </CardHeader>
         <CardContent>
           <div className="flex justify-center py-8">
-            <IconLoader className="animate-spin text-muted-foreground" size={24} />
+            <IconLoader
+              className="animate-spin text-muted-foreground"
+              size={24}
+            />
           </div>
         </CardContent>
       </Card>
@@ -716,11 +729,14 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
             <CardContent>
               {loadingTrades ? (
                 <div className="flex justify-center py-8">
-                  <IconLoader className="animate-spin text-muted-foreground" size={24} />
+                  <IconLoader
+                    className="animate-spin text-muted-foreground"
+                    size={24}
+                  />
                 </div>
               ) : (
                 <HedgeFundTable
-                  data={allWagersData as Record<string, unknown>[]}
+                  data={allWagersData as unknown as Record<string, unknown>[]}
                   columns={allWagersColumns}
                 />
               )}
