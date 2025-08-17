@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { useSignOut, type User } from '@coinbase/cdp-hooks';
 import {
   IconDotsVertical,
@@ -10,6 +11,7 @@ import {
 import { useEnsAvatar, useEnsName } from 'wagmi';
 import { mainnet } from 'wagmi/chains';
 
+import { AccountDialog } from '@/components/account-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -29,6 +31,7 @@ import {
 export function NavUser({ user }: { user: User }) {
   const { signOut } = useSignOut();
   const { isMobile } = useSidebar();
+  const [accountDialogOpen, setAccountDialogOpen] = React.useState(false);
 
   const { data: name } = useEnsName({
     address: user.evmAccounts?.[0],
@@ -74,7 +77,7 @@ export function NavUser({ user }: { user: User }) {
             sideOffset={4}
           >
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setAccountDialogOpen(true)}>
                 <IconUserCircle />
                 Account
               </DropdownMenuItem>
@@ -90,6 +93,10 @@ export function NavUser({ user }: { user: User }) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <AccountDialog 
+          open={accountDialogOpen} 
+          onOpenChange={setAccountDialogOpen} 
+        />
       </SidebarMenuItem>
     </SidebarMenu>
   );
