@@ -23,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface PortfolioMetrics {
   totalValue: number;
@@ -42,6 +43,7 @@ export function SectionCards({ agentType }: { agentType?: string }) {
     winRate: 0,
     usdcBalance: 0,
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Fetch portfolio metrics for all agent types
@@ -83,6 +85,8 @@ export function SectionCards({ agentType }: { agentType?: string }) {
         });
       } catch (error) {
         console.error('Error fetching portfolio metrics:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -100,6 +104,39 @@ export function SectionCards({ agentType }: { agentType?: string }) {
   const formatPercent = (value: number) => {
     return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
   };
+
+  // Show skeleton loaders while loading
+  if (loading) {
+    return (
+      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-6">
+        {[...Array(6)].map((_, index) => (
+          <Card key={index} className="@container/card metric-card hedge-fund-card">
+            <CardHeader>
+              <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
+                <Skeleton className="h-4 w-4 rounded" />
+                <Skeleton className="h-4 w-24" />
+              </CardDescription>
+              <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
+                <Skeleton className="h-8 w-32" />
+              </CardTitle>
+              <CardAction>
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </CardAction>
+            </CardHeader>
+            <CardFooter className="flex-col items-start gap-1.5 text-sm">
+              <div className="line-clamp-1 flex gap-2 font-medium">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-4 rounded" />
+              </div>
+              <div className="text-muted-foreground hedge-fund-subtitle">
+                <Skeleton className="h-4 w-48" />
+              </div>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   // Shared portfolio metrics cards for all agent types with real data and polished styling
   return (
