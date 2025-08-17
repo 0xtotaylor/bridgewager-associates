@@ -24,6 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { HedgeFundTable } from '@/components/hedge-fund-table';
 import { ReportViewer } from '@/components/report-viewer';
 
@@ -518,6 +519,7 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
     null,
   );
   const [isReportViewerOpen, setIsReportViewerOpen] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
 
   // Fetch research reports for research analyst
   useEffect(() => {
@@ -591,6 +593,32 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
   const handleCloseReportViewer = () => {
     setIsReportViewerOpen(false);
     setSelectedReport(null);
+  };
+
+  const handleGenerateReport = async () => {
+    setGeneratingReport(true);
+    try {
+      const researchUrl = process.env.NEXT_PUBLIC_RESEARCH_URL || 'https://bridgewager-associates-core-api.vercel.app/api/v1/core/agents/run';
+      
+      // Send POST request without waiting for response
+      fetch(researchUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      }).catch((error) => {
+        console.error('Error generating report:', error);
+      });
+      
+      // Show brief feedback to user
+      setTimeout(() => {
+        setGeneratingReport(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Error initiating report generation:', error);
+      setGeneratingReport(false);
+    }
   };
 
   const loadReportFiles = async () => {
@@ -752,11 +780,24 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <IconComponent className="h-5 w-5" />
-            {config.title}
-          </CardTitle>
-          <CardDescription>{config.description}</CardDescription>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <CardTitle className="flex items-center gap-2">
+                <IconComponent className="h-5 w-5" />
+                {config.title}
+              </CardTitle>
+              <CardDescription>{config.description}</CardDescription>
+            </div>
+            {agentType === 'research-analyst' && hasUrlParams && (
+              <Button 
+                onClick={handleGenerateReport}
+                disabled={generatingReport}
+                className="ml-4"
+              >
+                {generatingReport ? 'Generating...' : 'Generate Report'}
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="relative">
