@@ -40,7 +40,7 @@ export function PolymarketTransactionDialog({
       const ethAmount = parseFloat(amount);
       const weiAmount = BigInt(Math.floor(ethAmount * 1e18));
 
-      const result = await sendEvmTransaction({
+      await sendEvmTransaction({
         transaction: {
           to: evmAddress,
           value: weiAmount,
@@ -51,8 +51,6 @@ export function PolymarketTransactionDialog({
         evmAccount: evmAddress,
         network: 'base',
       });
-
-      console.log('Transaction hash:', result.transactionHash);
 
       setAmount('3.00');
       setIsOpen(false);

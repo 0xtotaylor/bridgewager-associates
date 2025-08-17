@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEvmAddress } from '@coinbase/cdp-hooks';
-import { getOnrampBuyUrl } from '@coinbase/onchainkit/fund';
 import { IconCurrencyDollar, type Icon } from '@tabler/icons-react';
 
 import { Button } from '@/components/ui/button';
@@ -24,16 +26,48 @@ export function NavMain({
     icon?: Icon;
   }[];
 }) {
+  const pathname = usePathname();
   const { evmAddress } = useEvmAddress();
+  const [onrampUrl, setOnrampUrl] = useState<string | null>(null);
 
-  const onrampBuyUrl = getOnrampBuyUrl({
-    projectId: process.env.NEXT_PUBLIC_CDP_PROJECT_ID ?? '',
-    addresses: { [evmAddress ?? '']: ['base'] },
-    assets: ['USDC'],
-    presetFiatAmount: 20,
-    fiatCurrency: 'USD',
-    redirectUrl: window.location.origin,
-  });
+  useEffect(() => {
+    if (!evmAddress) return;
+
+    const addresses = [
+      {
+        address: evmAddress,
+        blockchains: ['base'],
+      },
+    ];
+
+    const generateURL = async () => {
+      try {
+        const response = await fetch('/api/session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            addresses,
+            assets: ['USDC'],
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const onramp_url = `https://pay.coinbase.com/buy/select-asset?sessionToken=${data.token}&defaultNetwork=base&presetFiatAmount=10`;
+        setOnrampUrl(onramp_url);
+      } catch (error) {
+        console.error('Error fetching session:', error);
+      }
+    };
+
+    generateURL();
+  }, [evmAddress]);
 
   return (
     <SidebarGroup>
@@ -60,7 +94,7 @@ export function NavMain({
               variant="outline"
               asChild
             >
-              <a href={onrampBuyUrl} target="_blank" rel="noopener noreferrer">
+              <a href={onrampUrl!} target="_blank" rel="noopener noreferrer">
                 <IconCurrencyDollar />
                 <span className="sr-only">Dollar</span>
               </a>
@@ -68,14 +102,23 @@ export function NavMain({
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {items.map((item) => {
+            const isActive = pathname === item.url;
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  asChild
+                  isActive={isActive}
+                >
+                  <Link href={item.url}>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
