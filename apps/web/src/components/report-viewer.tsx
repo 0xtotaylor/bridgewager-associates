@@ -271,22 +271,11 @@ export function ReportViewer({
                   </div>
 
                   {/* Footer */}
-                  <div className="px-4 py-3 border-t bg-muted/10 shrink-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground min-w-0">
-                        <span>File saved to research DB</span>
-                        <span>•</span>
-                        <span>Research Team</span>
-                        <span>•</span>
-                        <span className="text-xs">Press Esc to close</span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Button size="sm" variant="outline">
-                          General
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          Review
-                        </Button>
+                  <div className="px-4 py-6 border-t bg-muted/10 shrink-0">
+                    <div className="flex items-center">
+                      <div className="flex-1" />
+                      <div className="flex items-center">
+                        <Button>Place Wager</Button>
                       </div>
                     </div>
                   </div>
