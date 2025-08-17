@@ -17,6 +17,7 @@ import type { Position, Trade } from '@/lib/polymarket-portfolio';
 import { createClient } from '@/lib/supabase';
 import { ResearchReport, TableCell } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -24,7 +25,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { HedgeFundTable } from '@/components/hedge-fund-table';
 import { ReportViewer } from '@/components/report-viewer';
 
@@ -598,8 +598,8 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
   const handleGenerateReport = async () => {
     setGeneratingReport(true);
     try {
-      const researchUrl = process.env.NEXT_PUBLIC_RESEARCH_URL || 'https://bridgewager-associates-core-api.vercel.app/api/v1/core/agents/run';
-      
+      const researchUrl = process.env.NEXT_PUBLIC_RESEARCH_URL!;
+
       // Send POST request without waiting for response
       fetch(researchUrl, {
         method: 'POST',
@@ -610,7 +610,7 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
       }).catch((error) => {
         console.error('Error generating report:', error);
       });
-      
+
       // Show brief feedback to user
       setTimeout(() => {
         setGeneratingReport(false);
@@ -789,7 +789,7 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
               <CardDescription>{config.description}</CardDescription>
             </div>
             {agentType === 'research-analyst' && hasUrlParams && (
-              <Button 
+              <Button
                 onClick={handleGenerateReport}
                 disabled={generatingReport}
                 className="ml-4"
