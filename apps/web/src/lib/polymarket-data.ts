@@ -1,7 +1,21 @@
 'use client';
 
 import { createClient } from './supabase';
-import type { HistoricalData, Market, PolymarketData, ResearchReport } from './types';
+import type {
+  HistoricalData,
+  Market,
+  PolymarketData,
+  ResearchReport,
+} from './types';
+
+interface ResearchFile {
+  id: string;
+  name: string;
+  blobObjectId?: string;
+  mimeType?: string;
+  createdAt?: string;
+  locked?: boolean;
+}
 
 const supabase = createClient();
 
@@ -193,48 +207,55 @@ function categorizeMarket(question: string): string {
 export async function fetchResearchReports(): Promise<ResearchReport[]> {
   try {
     const response = await fetch('/api/research');
-    
+
     if (!response.ok) {
-      console.error('API error fetching research reports:', response.statusText);
+      console.error(
+        'API error fetching research reports:',
+        response.statusText,
+      );
       return [];
     }
 
     const data = await response.json();
     const files = data.files || [];
-    
+
     // Transform the file data into ResearchReport format
-    const reports: ResearchReport[] = files.map((file: any, index: number) => {
-      // Safely parse the date
-      let publishedDate = new Date().toISOString().split('T')[0]!;
-      let lastUpdated = new Date().toISOString();
-      
-      if (file.createdAt) {
-        const parsedDate = new Date(file.createdAt);
-        if (!isNaN(parsedDate.getTime())) {
-          publishedDate = parsedDate.toISOString().split('T')[0]!;
-          lastUpdated = parsedDate.toISOString();
+    const reports: ResearchReport[] = files.map(
+      (file: ResearchFile, index: number) => {
+        // Safely parse the date
+        let publishedDate = new Date().toISOString().split('T')[0]!;
+        let lastUpdated = new Date().toISOString();
+
+        if (file.createdAt) {
+          const parsedDate = new Date(file.createdAt);
+          if (!isNaN(parsedDate.getTime())) {
+            publishedDate = parsedDate.toISOString().split('T')[0]!;
+            lastUpdated = parsedDate.toISOString();
+          }
         }
-      }
 
-      return {
-        id: file.id || `report-${index}`,
-        title: file.name || `Research Report ${index + 1}`,
-        author: 'Research Team',
-        publishedDate,
-        blobObjectId: file.blobObjectId || '',
-        mimeType: file.mimeType || 'application/octet-stream',
-        confidence: 0.8,
-        locked: file.locked || false,
-        summary: `Research report file: ${file.name}`,
-        keyFindings: ['Report available for review'],
-        riskLevel: 'Medium' as const,
-        status: 'Published' as const,
-        tags: ['research'],
-        lastUpdated,
-      };
-    });
+        return {
+          id: file.id || `report-${index}`,
+          title: file.name || `Research Report ${index + 1}`,
+          author: 'Research Team',
+          publishedDate,
+          blobObjectId: file.blobObjectId || '',
+          mimeType: file.mimeType || 'application/octet-stream',
+          confidence: 0.8,
+          locked: file.locked || false,
+          summary: `Research report file: ${file.name}`,
+          keyFindings: ['Report available for review'],
+          riskLevel: 'Medium' as const,
+          status: 'Published' as const,
+          tags: ['research'],
+          lastUpdated,
+        };
+      },
+    );
 
-    console.log(`Successfully fetched ${reports.length} research reports from API`);
+    console.log(
+      `Successfully fetched ${reports.length} research reports from API`,
+    );
     return reports;
   } catch (err) {
     console.error('Network error fetching research reports:', err);

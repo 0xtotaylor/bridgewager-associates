@@ -53,7 +53,7 @@ export class AgentsService implements OnModuleInit {
     }
   }
 
-  private async initiate() {
+  async initiate() {
     try {
       this.logger.log('Starting market identification process...');
 

@@ -2,19 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import {
+  IconAlertTriangle,
   IconChartDots3,
   IconChartLine,
   IconCurrencyDollar,
+  IconPercentage,
   IconShield,
-  IconTarget,
   IconTrendingDown,
   IconTrendingUp,
   IconWallet,
-  IconPercentage,
-  IconAlertTriangle,
 } from '@tabler/icons-react';
 
-import { mockFundMetrics } from '@/lib/mock-data';
+import type { Position } from '@/lib/polymarket-portfolio';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -24,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface PortfolioMetrics {
   totalValue: number;
@@ -43,214 +43,156 @@ export function SectionCards({ agentType }: { agentType?: string }) {
     winRate: 0,
     usdcBalance: 0,
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (agentType === 'portfolio-manager') {
-      // Fetch portfolio metrics
-      const fetchPortfolioMetrics = async () => {
-        try {
-          const { getUserPositions, getUserHoldings, getUserUSDCBalance } = await import(
-            '@/lib/polymarket-portfolio'
-          );
+    // Fetch portfolio metrics for all agent types
+    const fetchPortfolioMetrics = async () => {
+      try {
+        const { getUserPositions, getUserHoldings, getUserUSDCBalance } =
+          await import('@/lib/polymarket-portfolio');
 
-          const userAddress = '0x4bA01fF1DEfA6948a801d3711892b9c00F170447';
-          
-          // Get holdings value and USDC balance in parallel
-          const [holdings, positions, usdcData] = await Promise.all([
-            getUserHoldings(userAddress),
-            getUserPositions(userAddress, {
-              limit: 100,
-              sortBy: 'CURRENT',
-            }),
-            getUserUSDCBalance(userAddress)
-          ]);
-          
-          const totalValue = holdings[0]?.value || 0;
-          const usdcBalance = parseFloat(usdcData.display);
-          
-          // Calculate metrics
-          const totalPnL = positions.reduce((sum: number, pos: any) => sum + pos.cashPnl, 0);
-          const totalInitial = positions.reduce((sum: number, pos: any) => sum + pos.initialValue, 0);
-          const totalPnLPercent = totalInitial > 0 ? (totalPnL / totalInitial) * 100 : 0;
-          const winningPositions = positions.filter((pos: any) => pos.cashPnl > 0).length;
-          const winRate = positions.length > 0 ? (winningPositions / positions.length) * 100 : 0;
-          
-          setPortfolioMetrics({
-            totalValue,
-            totalPnL,
-            totalPnLPercent,
-            positionCount: positions.length,
-            winRate,
-            usdcBalance,
-          });
-        } catch (error) {
-          console.error('Error fetching portfolio metrics:', error);
-        }
-      };
+        const userAddress = '0x4bA01fF1DEfA6948a801d3711892b9c00F170447';
 
-      fetchPortfolioMetrics();
-    }
+        // Get holdings value and USDC balance in parallel
+        const [holdings, positions, usdcData] = await Promise.all([
+          getUserHoldings(userAddress),
+          getUserPositions(userAddress, {
+            limit: 100,
+            sortBy: 'CURRENT',
+          }),
+          getUserUSDCBalance(userAddress),
+        ]);
+
+        const totalValue = holdings[0]?.value || 0;
+        const usdcBalance = parseFloat(usdcData.display);
+
+        // Calculate metrics
+        const totalPnL = positions.reduce(
+          (sum: number, pos: Position) => sum + pos.cashPnl,
+          0,
+        );
+        const totalInitial = positions.reduce(
+          (sum: number, pos: Position) => sum + pos.initialValue,
+          0,
+        );
+        const totalPnLPercent =
+          totalInitial > 0 ? (totalPnL / totalInitial) * 100 : 0;
+        const winningPositions = positions.filter(
+          (pos: Position) => pos.cashPnl > 0,
+        ).length;
+        const winRate =
+          positions.length > 0
+            ? (winningPositions / positions.length) * 100
+            : 0;
+
+        setPortfolioMetrics({
+          totalValue,
+          totalPnL,
+          totalPnLPercent,
+          positionCount: positions.length,
+          winRate,
+          usdcBalance,
+        });
+      } catch (error) {
+        console.error('Error fetching portfolio metrics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPortfolioMetrics();
   }, [agentType]);
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
 
   const formatPercent = (value: number) => {
     return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
   };
 
-  // Show portfolio-specific metrics for portfolio manager
-  if (agentType === 'portfolio-manager') {
+  // Show skeleton loaders while loading
+  if (loading) {
     return (
       <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-6">
-        <Card className="@container/card metric-card hedge-fund-card">
-          <CardHeader>
-            <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
-              <IconCurrencyDollar className="size-4" />
-              USDC Balance
-            </CardDescription>
-            <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
-              ${portfolioMetrics.usdcBalance.toFixed(2)}
-            </CardTitle>
-            <CardAction>
-              <Badge variant="outline" className="hedge-fund-change">
-                Available Funds
-              </Badge>
-            </CardAction>
-          </CardHeader>
-        </Card>
-
-        <Card className="@container/card metric-card hedge-fund-card">
-          <CardHeader>
-            <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
-              <IconWallet className="size-4" />
-              Portfolio Value
-            </CardDescription>
-            <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
-              ${portfolioMetrics.totalValue.toFixed(2)}
-            </CardTitle>
-            <CardAction>
-              <Badge variant="outline" className="hedge-fund-change">
-                In Positions
-              </Badge>
-            </CardAction>
-          </CardHeader>
-        </Card>
-
-        <Card className="@container/card metric-card hedge-fund-card">
-          <CardHeader>
-            <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
-              <IconCurrencyDollar className="size-4" />
-              Total P&L
-            </CardDescription>
-            <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
-              <span className={portfolioMetrics.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}>
-                {portfolioMetrics.totalPnL >= 0 ? '+' : ''}${portfolioMetrics.totalPnL.toFixed(2)}
-              </span>
-            </CardTitle>
-            <CardAction>
-              <Badge 
-                variant="outline" 
-                className={`hedge-fund-change ${portfolioMetrics.totalPnL >= 0 ? 'pnl-positive' : 'pnl-negative'}`}
-              >
-                {portfolioMetrics.totalPnL >= 0 ? <IconTrendingUp /> : <IconTrendingDown />}
-                {formatPercent(portfolioMetrics.totalPnLPercent)}
-              </Badge>
-            </CardAction>
-          </CardHeader>
-        </Card>
-
-        <Card className="@container/card metric-card hedge-fund-card">
-          <CardHeader>
-            <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
-              <IconChartDots3 className="size-4" />
-              Active Positions
-            </CardDescription>
-            <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
-              {portfolioMetrics.positionCount}
-            </CardTitle>
-            <CardAction>
-              <Badge variant="outline" className="hedge-fund-change">
-                Markets
-              </Badge>
-            </CardAction>
-          </CardHeader>
-        </Card>
-
-        <Card className="@container/card metric-card hedge-fund-card">
-          <CardHeader>
-            <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
-              <IconPercentage className="size-4" />
-              Win Rate
-            </CardDescription>
-            <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
-              {portfolioMetrics.winRate.toFixed(1)}%
-            </CardTitle>
-            <CardAction>
-              <Badge 
-                variant="outline" 
-                className={`hedge-fund-change ${portfolioMetrics.winRate >= 50 ? 'pnl-positive' : 'pnl-negative'}`}
-              >
-                {portfolioMetrics.winRate >= 50 ? 'Profitable' : 'Underwater'}
-              </Badge>
-            </CardAction>
-          </CardHeader>
-        </Card>
-
-        <Card className="@container/card metric-card hedge-fund-card">
-          <CardHeader>
-            <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
-              <IconAlertTriangle className="size-4" />
-              Risk Score
-            </CardDescription>
-            <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
-              {Math.abs(portfolioMetrics.totalPnLPercent) > 20 ? 'High' : Math.abs(portfolioMetrics.totalPnLPercent) > 10 ? 'Medium' : 'Low'}
-            </CardTitle>
-            <CardAction>
-              <Badge 
-                variant="outline" 
-                className="hedge-fund-change"
-              >
-                <IconShield />
-                Monitored
-              </Badge>
-            </CardAction>
-          </CardHeader>
-        </Card>
+        {[...Array(6)].map((_, index) => (
+          <Card
+            key={index}
+            className="@container/card metric-card hedge-fund-card"
+          >
+            <CardHeader>
+              <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
+                <Skeleton className="h-4 w-4 rounded" />
+                <Skeleton className="h-4 w-24" />
+              </CardDescription>
+              <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
+                <Skeleton className="h-8 w-32" />
+              </CardTitle>
+              <CardAction>
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </CardAction>
+            </CardHeader>
+            <CardFooter className="flex-col items-start gap-1.5 text-sm">
+              <div className="line-clamp-1 flex gap-2 font-medium">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-4 rounded" />
+              </div>
+              <div className="text-muted-foreground hedge-fund-subtitle">
+                <Skeleton className="h-4 w-48" />
+              </div>
+            </CardFooter>
+          </Card>
+        ))}
       </div>
     );
   }
 
-  // Default metrics for other agents
+  // Shared portfolio metrics cards for all agent types with real data and polished styling
   return (
-    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-5">
+    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-6">
       <Card className="@container/card metric-card hedge-fund-card">
         <CardHeader>
           <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
             <IconCurrencyDollar className="size-4" />
-            Net Asset Value
+            USDC Balance
           </CardDescription>
           <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
-            {formatCurrency(mockFundMetrics.nav)}
+            ${portfolioMetrics.usdcBalance.toFixed(2)}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline" className="hedge-fund-change pnl-positive">
-              <IconTrendingUp />
-              +2.8%
+            <Badge variant="outline" className="hedge-fund-change">
+              Available Funds
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Fund bankroll <IconCurrencyDollar className="size-4" />
+            Liquid cash <IconCurrencyDollar className="size-4" />
           </div>
           <div className="text-muted-foreground hedge-fund-subtitle">
-            Total capital available for deployment
+            Ready for immediate deployment
+          </div>
+        </CardFooter>
+      </Card>
+
+      <Card className="@container/card metric-card hedge-fund-card">
+        <CardHeader>
+          <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
+            <IconWallet className="size-4" />
+            Portfolio Value
+          </CardDescription>
+          <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
+            ${portfolioMetrics.totalValue.toFixed(2)}
+          </CardTitle>
+          <CardAction>
+            <Badge variant="outline" className="hedge-fund-change">
+              In Positions
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Active capital <IconWallet className="size-4" />
+          </div>
+          <div className="text-muted-foreground hedge-fund-subtitle">
+            Total value of current market positions
           </div>
         </CardFooter>
       </Card>
@@ -259,76 +201,39 @@ export function SectionCards({ agentType }: { agentType?: string }) {
         <CardHeader>
           <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
             <IconChartLine className="size-4" />
-            Daily PnL
+            Total P&L
           </CardDescription>
-          <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl pnl-positive">
-            {formatCurrency(mockFundMetrics.pnlDaily)}
+          <CardTitle
+            className={`hedge-fund-metric @[250px]/card:text-3xl ${portfolioMetrics.totalPnL >= 0 ? 'pnl-positive' : 'pnl-negative'}`}
+          >
+            {portfolioMetrics.totalPnL >= 0 ? '+' : ''}$
+            {portfolioMetrics.totalPnL.toFixed(2)}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline" className="hedge-fund-change pnl-positive">
-              <IconTrendingUp />
-              +6.4%
+            <Badge
+              variant="outline"
+              className={`hedge-fund-change ${portfolioMetrics.totalPnL >= 0 ? 'pnl-positive' : 'pnl-negative'}`}
+            >
+              {portfolioMetrics.totalPnL >= 0 ? (
+                <IconTrendingUp />
+              ) : (
+                <IconTrendingDown />
+              )}
+              {formatPercent(portfolioMetrics.totalPnLPercent)}
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Realized + unrealized <IconTrendingUp className="size-4" />
+            Realized + unrealized{' '}
+            {portfolioMetrics.totalPnL >= 0 ? (
+              <IconTrendingUp className="size-4" />
+            ) : (
+              <IconTrendingDown className="size-4" />
+            )}
           </div>
           <div className="text-muted-foreground hedge-fund-subtitle">
-            Today&apos;s profit/loss performance
-          </div>
-        </CardFooter>
-      </Card>
-
-      <Card className="@container/card metric-card hedge-fund-card">
-        <CardHeader>
-          <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
-            <IconShield className="size-4" />
-            Capital at Risk
-          </CardDescription>
-          <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl financial-number">
-            {formatPercent(mockFundMetrics.capitalAtRiskPct)}
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline" className="hedge-fund-change risk-medium">
-              <IconTrendingUp />
-              +5.2%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Bankroll deployed <IconShield className="size-4" />
-          </div>
-          <div className="text-muted-foreground hedge-fund-subtitle">
-            Percentage of NAV in active wagers
-          </div>
-        </CardFooter>
-      </Card>
-
-      <Card className="@container/card metric-card hedge-fund-card">
-        <CardHeader>
-          <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
-            <IconTarget className="size-4" />
-            Expected Value
-          </CardDescription>
-          <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl pnl-positive">
-            {formatCurrency(mockFundMetrics.evTotal)}
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline" className="hedge-fund-change pnl-positive">
-              <IconTrendingUp />
-              +12.1%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Sum across active bets <IconTarget className="size-4" />
-          </div>
-          <div className="text-muted-foreground hedge-fund-subtitle">
-            Forecasted profit from current positions
+            Total profit/loss across all positions
           </div>
         </CardFooter>
       </Card>
@@ -337,24 +242,83 @@ export function SectionCards({ agentType }: { agentType?: string }) {
         <CardHeader>
           <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
             <IconChartDots3 className="size-4" />
-            Max Drawdown (30d)
+            Active Positions
           </CardDescription>
-          <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl pnl-negative">
-            {formatPercent(mockFundMetrics.maxDrawdown30d)}
+          <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
+            {portfolioMetrics.positionCount}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline" className="hedge-fund-change risk-high">
-              <IconTrendingDown />
-              Risk indicator
+            <Badge variant="outline" className="hedge-fund-change">
+              Markets
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Rolling worst decline <IconChartDots3 className="size-4" />
+            Open positions <IconChartDots3 className="size-4" />
           </div>
           <div className="text-muted-foreground hedge-fund-subtitle">
-            Maximum portfolio decline in last 30 days
+            Number of active prediction market positions
+          </div>
+        </CardFooter>
+      </Card>
+
+      <Card className="@container/card metric-card hedge-fund-card">
+        <CardHeader>
+          <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
+            <IconPercentage className="size-4" />
+            Win Rate
+          </CardDescription>
+          <CardTitle
+            className={`hedge-fund-metric @[250px]/card:text-3xl ${portfolioMetrics.winRate >= 50 ? 'pnl-positive' : 'pnl-negative'}`}
+          >
+            {portfolioMetrics.winRate.toFixed(1)}%
+          </CardTitle>
+          <CardAction>
+            <Badge
+              variant="outline"
+              className={`hedge-fund-change ${portfolioMetrics.winRate >= 50 ? 'pnl-positive' : 'pnl-negative'}`}
+            >
+              {portfolioMetrics.winRate >= 50 ? 'Profitable' : 'Underwater'}
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Portfolio accuracy <IconPercentage className="size-4" />
+          </div>
+          <div className="text-muted-foreground hedge-fund-subtitle">
+            Percentage of winning positions
+          </div>
+        </CardFooter>
+      </Card>
+
+      <Card className="@container/card metric-card hedge-fund-card">
+        <CardHeader>
+          <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
+            <IconAlertTriangle className="size-4" />
+            Risk Score
+          </CardDescription>
+          <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
+            {Math.abs(portfolioMetrics.totalPnLPercent) > 20
+              ? 'High'
+              : Math.abs(portfolioMetrics.totalPnLPercent) > 10
+                ? 'Medium'
+                : 'Low'}
+          </CardTitle>
+          <CardAction>
+            <Badge variant="outline" className="hedge-fund-change">
+              <IconShield />
+              Monitored
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Risk assessment <IconAlertTriangle className="size-4" />
+          </div>
+          <div className="text-muted-foreground hedge-fund-subtitle">
+            Portfolio volatility risk level
           </div>
         </CardFooter>
       </Card>

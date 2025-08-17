@@ -2,6 +2,7 @@ import { LucideIcon } from 'lucide-react';
 
 export type TableRow = {
   getValue: (key: string) => string | number;
+  original: Record<string, unknown>;
 };
 
 export type TableCell = {
