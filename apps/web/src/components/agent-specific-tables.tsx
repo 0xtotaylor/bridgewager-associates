@@ -60,7 +60,7 @@ const supabase = createClient();
 async function fetchAllWagersData(): Promise<TradeData[]> {
   try {
     // Dynamically import the Polymarket portfolio functions
-    const { getUserTrades } = await import('@/lib/polymarket-portfolio.js');
+    const { getUserTrades } = await import('@/lib/polymarket-portfolio');
     
     // Using a known address for demo purposes - replace with actual user address
     const userAddress = '0x4bA01fF1DEfA6948a801d3711892b9c00F170447';
@@ -94,7 +94,7 @@ async function fetchAllWagersData(): Promise<TradeData[]> {
 async function fetchWagersData(): Promise<WagerData[]> {
   try {
     // Dynamically import the Polymarket portfolio functions
-    const { getUserPositions } = await import('@/lib/polymarket-portfolio.js');
+    const { getUserPositions } = await import('@/lib/polymarket-portfolio');
     
     // Using a known address for demo purposes - replace with actual user address
     const userAddress = '0x4bA01fF1DEfA6948a801d3711892b9c00F170447';

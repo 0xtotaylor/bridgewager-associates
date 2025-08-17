@@ -50,7 +50,7 @@ export function SectionCards({ agentType }: { agentType?: string }) {
       const fetchPortfolioMetrics = async () => {
         try {
           const { getUserPositions, getUserHoldings, getUserUSDCBalance } = await import(
-            '@/lib/polymarket-portfolio.js'
+            '@/lib/polymarket-portfolio'
           );
 
           const userAddress = '0x4bA01fF1DEfA6948a801d3711892b9c00F170447';
