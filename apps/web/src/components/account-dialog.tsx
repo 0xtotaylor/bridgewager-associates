@@ -70,7 +70,7 @@ export function AccountDialog({ open, onOpenChange }: AccountDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Account Preferences</DialogTitle>
           <DialogDescription>
@@ -119,12 +119,12 @@ export function AccountDialog({ open, onOpenChange }: AccountDialogProps) {
             Cancel
           </Button>
           <Button
-            variant="outline"
+            className="bg-green-600 hover:bg-green-700 text-white border-green-600"
             onClick={() => {
               window.location.href = 'https://dashboard.heyvincent.ai/user/appId/7280666305/connect?redirectUri=https%3A%2F%2Fbridgewager-associates-web.vercel.app%2Fresearch-analyst';
             }}
           >
-            Lock Preferences
+            Set Vincent Preferences
           </Button>
           <Button onClick={handleSave}>
             Save Preferences
