@@ -2,11 +2,11 @@ import { Controller, Get } from '@nestjs/common';
 
 import { AgentsService } from './services/agents.service';
 
-@Controller()
+@Controller('agents')
 export class AgentController {
   constructor(private readonly agentsService: AgentsService) {}
 
-  @Get('agents')
+  @Get('/run')
   async agents() {
     return await this.agentsService.initiate();
   }
