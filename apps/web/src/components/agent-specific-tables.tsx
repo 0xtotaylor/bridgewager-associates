@@ -34,25 +34,82 @@ interface WagerData {
   weight: number;
   pnl: number;
   risk: string;
+  currentPrice?: number;
+  avgPrice?: number;
+  size?: number;
+  percentPnl?: number;
+  endDate?: string;
+  outcome?: string;
+  realizedPnl?: number;
 }
 
 const supabase = createClient();
 
 async function fetchWagersData(): Promise<WagerData[]> {
   try {
-    const { data, error } = await supabase
-      .from('wagers')
-      .select('name, allocation, weight, pnl, risk');
+    // Dynamically import the Polymarket portfolio functions
+    const { getUserPositions } = await import('@/lib/polymarket-portfolio.js');
+    
+    // Using a known address for demo purposes - replace with actual user address
+    const userAddress = '0x4bA01fF1DEfA6948a801d3711892b9c00F170447';
+    
+    // Fetch positions from Polymarket
+    const positions = await getUserPositions(userAddress, {
+      limit: 50,
+      sortBy: 'CURRENT',
+      sortDirection: 'DESC',
+      sizeThreshold: 0.01 // Only show positions with meaningful size
+    });
 
-    if (error) {
-      console.error('Error fetching wagers:', error);
+    // Transform Polymarket positions to WagerData format
+    const transformedData: WagerData[] = positions.map((position: any) => {
+      // Calculate risk level based on position metrics
+      let riskLevel = 'Low';
+      if (Math.abs(position.percentPnl) > 30) riskLevel = 'High';
+      else if (Math.abs(position.percentPnl) > 15) riskLevel = 'Medium';
+
+      return {
+        name: position.title,
+        allocation: position.currentValue,
+        weight: 0, // Will be calculated below
+        pnl: position.cashPnl,
+        risk: riskLevel,
+        currentPrice: position.curPrice,
+        avgPrice: position.avgPrice,
+        size: position.size,
+        percentPnl: position.percentPnl,
+        endDate: position.endDate,
+        outcome: position.outcome,
+        realizedPnl: position.realizedPnl,
+      };
+    });
+
+    // Calculate portfolio weights
+    const totalValue = transformedData.reduce((sum, item) => sum + item.allocation, 0);
+    transformedData.forEach(item => {
+      item.weight = totalValue > 0 ? item.allocation / totalValue : 0;
+    });
+
+    return transformedData;
+  } catch (err) {
+    console.error('Error fetching Polymarket positions:', err);
+    
+    // Fallback to Supabase data if Polymarket fails
+    try {
+      const { data, error } = await supabase
+        .from('wagers')
+        .select('name, allocation, weight, pnl, risk');
+
+      if (error) {
+        console.error('Error fetching wagers:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (fallbackErr) {
+      console.error('Error fetching fallback wagers data:', fallbackErr);
       return [];
     }
-
-    return data || [];
-  } catch (err) {
-    console.error('Error fetching wagers data:', err);
-    return [];
   }
 }
 
@@ -164,40 +221,75 @@ const getResearchAnalystColumns = (hasUrlParams: boolean) => [
 const portfolioManagerColumns = [
   {
     accessorKey: 'name',
-    header: 'Wager',
+    header: 'Market',
     cell: ({ row }: TableCell) => {
       const name = row.getValue('name') as string;
-      return <span className="max-w-xs truncate font-medium">{name}</span>;
+      const outcome = (row.original as any).outcome as string;
+      const endDate = (row.original as any).endDate as string;
+      return (
+        <div className="flex flex-col">
+          <span className="max-w-xs truncate font-medium">{name}</span>
+          <span className="text-xs text-muted-foreground">
+            {outcome} • Expires {endDate}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'size',
+    header: 'Position Size',
+    cell: ({ row }: TableCell) => {
+      const size = row.getValue('size') as number;
+      const avgPrice = (row.original as any).avgPrice as number;
+      const currentPrice = (row.original as any).currentPrice as number;
+      return (
+        <div className="flex flex-col">
+          <span className="font-mono">{size?.toFixed(2)} shares</span>
+          <span className="text-xs text-muted-foreground">
+            Avg: ${avgPrice?.toFixed(3)} | Now: ${currentPrice?.toFixed(3)}
+          </span>
+        </div>
+      );
     },
   },
   {
     accessorKey: 'allocation',
-    header: 'Capital Allocated',
+    header: 'Current Value',
     cell: ({ row }: TableCell) => {
       const allocation = row.getValue('allocation') as number;
-      return <span className="font-mono">${allocation.toLocaleString()}</span>;
-    },
-  },
-  {
-    accessorKey: 'weight',
-    header: 'Portfolio Weight',
-    cell: ({ row }: TableCell) => {
       const weight = row.getValue('weight') as number;
-      return <span className="font-mono">{(weight * 100).toFixed(1)}%</span>;
+      return (
+        <div className="flex flex-col">
+          <span className="font-mono">${allocation?.toFixed(2)}</span>
+          <span className="text-xs text-muted-foreground">
+            {(weight * 100).toFixed(1)}% of portfolio
+          </span>
+        </div>
+      );
     },
   },
   {
     accessorKey: 'pnl',
-    header: 'Unrealized P&L',
+    header: 'P&L',
     cell: ({ row }: TableCell) => {
       const pnl = row.getValue('pnl') as number;
+      const percentPnl = (row.original as any).percentPnl as number;
+      const realizedPnl = (row.original as any).realizedPnl as number;
       const isPositive = pnl >= 0;
       return (
-        <span
-          className={`font-mono font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}
-        >
-          {isPositive ? '+' : ''}${pnl.toLocaleString()}
-        </span>
+        <div className="flex flex-col">
+          <span
+            className={`font-mono font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}
+          >
+            {isPositive ? '+' : ''}${pnl?.toFixed(2)} ({percentPnl?.toFixed(1)}%)
+          </span>
+          {realizedPnl && realizedPnl !== 0 && (
+            <span className="text-xs text-muted-foreground">
+              Realized: ${realizedPnl.toFixed(2)}
+            </span>
+          )}
+        </div>
       );
     },
   },
