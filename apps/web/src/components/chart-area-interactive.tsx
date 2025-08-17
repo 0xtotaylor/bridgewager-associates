@@ -134,8 +134,8 @@ export function ChartAreaInteractive() {
           >
             <ToggleGroupItem value="all">All</ToggleGroupItem>
             <ToggleGroupItem value="agent">By Agent</ToggleGroupItem>
-            <ToggleGroupItem value="topic">By Topic</ToggleGroupItem>
-            <ToggleGroupItem value="venue">By Venue</ToggleGroupItem>
+            <ToggleGroupItem value="topic">By Market</ToggleGroupItem>
+            <ToggleGroupItem value="venue">By Volume</ToggleGroupItem>
           </ToggleGroup>
           <ToggleGroup
             type="single"
@@ -144,9 +144,9 @@ export function ChartAreaInteractive() {
             variant="outline"
             className="hidden *:data-[slot=toggle-group-item]:!px-4 @[767px]/card:flex"
           >
-            <ToggleGroupItem value="90d">90d</ToggleGroupItem>
-            <ToggleGroupItem value="30d">30d</ToggleGroupItem>
             <ToggleGroupItem value="7d">7d</ToggleGroupItem>
+            <ToggleGroupItem value="30d">30d</ToggleGroupItem>
+            <ToggleGroupItem value="90d">90d</ToggleGroupItem>
           </ToggleGroup>
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger
