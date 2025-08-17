@@ -85,7 +85,7 @@ export function NavMain({
                   width={12}
                   height={12}
                 />
-                <span>Polymarket</span>
+                <span>Capital Contribution</span>
               </SidebarMenuButton>
             </PolymarketTransactionDialog>
             <Button

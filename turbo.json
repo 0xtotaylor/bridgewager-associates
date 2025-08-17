@@ -11,7 +11,9 @@
         "TUSKY_VAULT_ID",
         "NEXT_PUBLIC_CDP_PROJECT_ID",
         "CDP_API_KEY_NAME",
-        "CDP_API_KEY_PRIVATE_KEY"
+        "CDP_API_KEY_PRIVATE_KEY",
+        "POLYMARKET_PRIVATE_KEY",
+        "POLYMARKET_FUNDER_ADDRESS"
       ]
     },
     "build": {
@@ -23,7 +25,9 @@
         "TUSKY_VAULT_ID",
         "NEXT_PUBLIC_CDP_PROJECT_ID",
         "CDP_API_KEY_NAME",
-        "CDP_API_KEY_PRIVATE_KEY"
+        "CDP_API_KEY_PRIVATE_KEY",
+        "POLYMARKET_PRIVATE_KEY",
+        "POLYMARKET_FUNDER_ADDRESS"
       ]
     },
     "lint": {},

@@ -192,23 +192,50 @@ function categorizeMarket(question: string): string {
 
 export async function fetchResearchReports(): Promise<ResearchReport[]> {
   try {
-    const { data, error } = await supabase
-      .from('research_reports')
-      .select('*')
-      .order('publishedDate', { ascending: false });
-
-    if (error) {
-      console.error('Supabase error fetching research reports:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code,
-      });
+    const response = await fetch('/api/research');
+    
+    if (!response.ok) {
+      console.error('API error fetching research reports:', response.statusText);
       return [];
     }
 
-    console.log(`Successfully fetched ${data?.length || 0} research reports`);
-    return data || [];
+    const data = await response.json();
+    const files = data.files || [];
+    
+    // Transform the file data into ResearchReport format
+    const reports: ResearchReport[] = files.map((file: any, index: number) => {
+      // Safely parse the date
+      let publishedDate = new Date().toISOString().split('T')[0]!;
+      let lastUpdated = new Date().toISOString();
+      
+      if (file.createdAt) {
+        const parsedDate = new Date(file.createdAt);
+        if (!isNaN(parsedDate.getTime())) {
+          publishedDate = parsedDate.toISOString().split('T')[0]!;
+          lastUpdated = parsedDate.toISOString();
+        }
+      }
+
+      return {
+        id: file.id || `report-${index}`,
+        title: file.name || `Research Report ${index + 1}`,
+        author: 'Research Team',
+        publishedDate,
+        blobObjectId: file.blobObjectId || '',
+        mimeType: file.mimeType || 'application/octet-stream',
+        confidence: 0.8,
+        locked: file.locked || false,
+        summary: `Research report file: ${file.name}`,
+        keyFindings: ['Report available for review'],
+        riskLevel: 'Medium' as const,
+        status: 'Published' as const,
+        tags: ['research'],
+        lastUpdated,
+      };
+    });
+
+    console.log(`Successfully fetched ${reports.length} research reports from API`);
+    return reports;
   } catch (err) {
     console.error('Network error fetching research reports:', err);
     return [];

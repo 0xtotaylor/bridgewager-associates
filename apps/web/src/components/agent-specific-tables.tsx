@@ -3,14 +3,15 @@
 import { useEffect, useState } from 'react';
 import {
   IconAlertTriangle,
-  IconChartBar,
+  IconChartPie,
+  IconListDetails,
+  IconLockOpen,
   IconShield,
-  IconTarget,
   IconTrendingUp,
 } from '@tabler/icons-react';
 
-import { mockResearchReports } from '@/lib/mock-data';
 import { fetchResearchReports } from '@/lib/polymarket-data';
+import { createClient } from '@/lib/supabase';
 import { ResearchReport, TableCell } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -21,83 +22,41 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { HedgeFundTable } from '@/components/hedge-fund-table';
+import { ReportViewer } from '@/components/report-viewer';
 
-// Use research reports data instead of performance metrics
-const researchAnalystData = mockResearchReports;
+// Research reports will come from API only
 
-const portfolioManagerData = [
-  {
-    position: 'US Election 2024',
-    allocation: '$125,000',
-    weight: '8.3%',
-    pnl: '+$12,450',
-    risk: 'Medium',
-  },
-  {
-    position: 'Fed Rate Decision',
-    allocation: '$89,000',
-    weight: '5.9%',
-    pnl: '+$3,200',
-    risk: 'Low',
-  },
-  {
-    position: 'Tech Stock Volatility',
-    allocation: '$67,500',
-    weight: '4.5%',
-    pnl: '-$1,800',
-    risk: 'High',
-  },
-  {
-    position: 'Crypto Regulation',
-    allocation: '$45,000',
-    weight: '3.0%',
-    pnl: '+$5,600',
-    risk: 'Medium',
-  },
-];
+interface WagerData {
+  name: string;
+  allocation: number;
+  weight: number;
+  pnl: number;
+  risk: string;
+}
 
-const traderData = [
-  {
-    market: 'Trump Wins 2024 Election',
-    venue: 'Polymarket',
-    position: 'YES $25k',
-    entry: '0.42',
-    current: '0.46',
-    pnl: '+$2,380',
-    status: 'Open',
-  },
-  {
-    market: 'Fed Cuts Rates in March',
-    venue: 'Kalshi',
-    position: 'NO $15k',
-    entry: '0.67',
-    current: '0.59',
-    pnl: '+$1,920',
-    status: 'Open',
-  },
-  {
-    market: 'Tesla $300 by EOY',
-    venue: 'Polymarket',
-    position: 'YES $10k',
-    entry: '0.28',
-    current: '0.31',
-    pnl: '+$1,070',
-    status: 'Open',
-  },
-  {
-    market: 'AI Regulation Bill Passes',
-    venue: 'Kalshi',
-    position: 'NO $20k',
-    entry: '0.75',
-    current: '0.72',
-    pnl: '+$800',
-    status: 'Pending',
-  },
-];
+const supabase = createClient();
+
+async function fetchWagersData(): Promise<WagerData[]> {
+  try {
+    const { data, error } = await supabase
+      .from('wagers')
+      .select('name, allocation, weight, pnl, risk');
+
+    if (error) {
+      console.error('Error fetching wagers:', error);
+      return [];
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('Error fetching wagers data:', err);
+    return [];
+  }
+}
 
 const complianceOfficerData = [
   {
-    check: 'Position Size Limits',
+    check: 'Wager Size Limits',
     status: 'Compliant',
     lastReview: '2024-01-15',
     nextReview: '2024-01-16',
@@ -137,35 +96,32 @@ const researchAnalystColumns = [
     },
   },
   {
-    accessorKey: 'author',
-    header: 'Author',
+    accessorKey: 'blobObjectId',
+    header: 'Blob ID',
     cell: ({ row }: TableCell) => {
-      const author = row.getValue('author') as string;
-      return <span className="font-medium">{author}</span>;
+      const blobId = row.getValue('blobObjectId') as string;
+      const truncatedId = blobId ? `${blobId.substring(0, 12)}...` : 'N/A';
+      return <span className="font-mono text-xs">{truncatedId}</span>;
     },
   },
   {
-    accessorKey: 'marketCategory',
-    header: 'Category',
+    accessorKey: 'mimeType',
+    header: 'MIME Type',
     cell: ({ row }: TableCell) => {
-      const category = row.getValue('marketCategory') as string;
-      return <Badge variant="outline">{category}</Badge>;
+      const mimeType = row.getValue('mimeType') as string;
+      return <Badge variant="outline">{mimeType || 'unknown'}</Badge>;
     },
   },
   {
-    accessorKey: 'recommendation',
-    header: 'Recommendation',
+    accessorKey: 'locked',
+    header: 'Locked',
     cell: ({ row }: TableCell) => {
-      const rec = row.getValue('recommendation') as string;
-      const variant =
-        rec === 'BUY'
-          ? 'default'
-          : rec === 'SELL'
-            ? 'destructive'
-            : rec === 'HOLD'
-              ? 'secondary'
-              : 'outline';
-      return <Badge variant={variant}>{rec}</Badge>;
+      const locked = Boolean(row.getValue('locked'));
+      return (
+        <div className="flex items-center justify-center">
+          {!locked && <IconLockOpen className="h-4 w-4 text-green-600" />}
+        </div>
+      );
     },
   },
   {
@@ -204,40 +160,40 @@ const researchAnalystColumns = [
 
 const portfolioManagerColumns = [
   {
-    accessorKey: 'position',
-    header: 'Position',
+    accessorKey: 'name',
+    header: 'Wager',
     cell: ({ row }: TableCell) => {
-      const position = row.getValue('position') as string;
-      return <span className="max-w-xs truncate font-medium">{position}</span>;
+      const name = row.getValue('name') as string;
+      return <span className="max-w-xs truncate font-medium">{name}</span>;
     },
   },
   {
     accessorKey: 'allocation',
     header: 'Capital Allocated',
     cell: ({ row }: TableCell) => {
-      const allocation = row.getValue('allocation') as string;
-      return <span className="font-mono">{allocation}</span>;
+      const allocation = row.getValue('allocation') as number;
+      return <span className="font-mono">${allocation.toLocaleString()}</span>;
     },
   },
   {
     accessorKey: 'weight',
     header: 'Portfolio Weight',
     cell: ({ row }: TableCell) => {
-      const weight = row.getValue('weight') as string;
-      return <span className="font-mono">{weight}</span>;
+      const weight = row.getValue('weight') as number;
+      return <span className="font-mono">{(weight * 100).toFixed(1)}%</span>;
     },
   },
   {
     accessorKey: 'pnl',
     header: 'Unrealized P&L',
     cell: ({ row }: TableCell) => {
-      const pnl = row.getValue('pnl') as string;
-      const isPositive = pnl.startsWith('+');
+      const pnl = row.getValue('pnl') as number;
+      const isPositive = pnl >= 0;
       return (
         <span
           className={`font-mono font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}
         >
-          {pnl}
+          {isPositive ? '+' : ''}${pnl.toLocaleString()}
         </span>
       );
     },
@@ -254,73 +210,6 @@ const portfolioManagerColumns = [
             ? 'secondary'
             : 'destructive';
       return <Badge variant={variant}>{risk}</Badge>;
-    },
-  },
-];
-
-const traderColumns = [
-  {
-    accessorKey: 'market',
-    header: 'Market',
-    cell: ({ row }: TableCell) => {
-      const market = row.getValue('market') as string;
-      return <span className="max-w-xs truncate">{market}</span>;
-    },
-  },
-  {
-    accessorKey: 'venue',
-    header: 'Venue',
-    cell: ({ row }: TableCell) => {
-      const venue = row.getValue('venue') as string;
-      return <Badge variant="outline">{venue}</Badge>;
-    },
-  },
-  {
-    accessorKey: 'position',
-    header: 'Position',
-    cell: ({ row }: TableCell) => {
-      const position = row.getValue('position') as string;
-      return <span className="font-mono">{position}</span>;
-    },
-  },
-  {
-    accessorKey: 'entry',
-    header: 'Entry Price',
-    cell: ({ row }: TableCell) => {
-      const entry = row.getValue('entry') as string;
-      return <span className="font-mono">{entry}</span>;
-    },
-  },
-  {
-    accessorKey: 'current',
-    header: 'Current Price',
-    cell: ({ row }: TableCell) => {
-      const current = row.getValue('current') as string;
-      return <span className="font-mono">{current}</span>;
-    },
-  },
-  {
-    accessorKey: 'pnl',
-    header: 'Unrealized P&L',
-    cell: ({ row }: TableCell) => {
-      const pnl = row.getValue('pnl') as string;
-      const isPositive = pnl.startsWith('+');
-      return (
-        <span
-          className={`font-mono font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}
-        >
-          {pnl}
-        </span>
-      );
-    },
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }: TableCell) => {
-      const status = row.getValue('status') as string;
-      const variant = status === 'Open' ? 'default' : 'secondary';
-      return <Badge variant={variant}>{status}</Badge>;
     },
   },
 ];
@@ -382,7 +271,12 @@ interface AgentSpecificTableProps {
 
 export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
   const [researchReports, setResearchReports] = useState<ResearchReport[]>([]);
+  const [wagersData, setWagersData] = useState<WagerData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<ResearchReport | null>(
+    null,
+  );
+  const [isReportViewerOpen, setIsReportViewerOpen] = useState(false);
 
   // Fetch research reports for research analyst
   useEffect(() => {
@@ -391,16 +285,10 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
         setLoading(true);
         try {
           const reports = await fetchResearchReports();
-          if (reports.length > 0) {
-            setResearchReports(reports);
-          } else {
-            // Fallback to mock data if no real data available
-            setResearchReports(mockResearchReports);
-          }
+          setResearchReports(reports);
         } catch (error) {
           console.error('Error fetching research reports:', error);
-          // Fallback to mock data on error
-          setResearchReports(mockResearchReports);
+          setResearchReports([]);
         } finally {
           setLoading(false);
         }
@@ -409,6 +297,47 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
       loadResearchReports();
     }
   }, [agentType]);
+
+  // Fetch wagers data for portfolio manager
+  useEffect(() => {
+    if (agentType === 'portfolio-manager') {
+      const loadWagersData = async () => {
+        setLoading(true);
+        try {
+          const data = await fetchWagersData();
+          setWagersData(data);
+        } catch (error) {
+          console.error('Error fetching wagers data:', error);
+          setWagersData([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadWagersData();
+    }
+  }, [agentType]);
+
+  const handleReportClick = (report: ResearchReport) => {
+    setSelectedReport(report);
+    setIsReportViewerOpen(true);
+  };
+
+  const handleCloseReportViewer = () => {
+    setIsReportViewerOpen(false);
+    setSelectedReport(null);
+  };
+
+  const loadReportFiles = async () => {
+    try {
+      const response = await fetch('/api/research');
+      const data = await response.json();
+      return data.files || [];
+    } catch (error) {
+      console.error('Error loading report files:', error);
+      return [];
+    }
+  };
   const getTableConfig = () => {
     switch (agentType) {
       case 'research-analyst':
@@ -416,10 +345,9 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
           title: 'Research Reports',
           description:
             'Published research reports and market analysis documents',
-          data:
-            researchReports.length > 0 ? researchReports : researchAnalystData,
+          data: researchReports,
           columns: researchAnalystColumns,
-          icon: IconTarget,
+          icon: IconListDetails,
           loading: loading,
         };
       case 'portfolio-manager':
@@ -427,17 +355,10 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
           title: 'Active Wagers',
           description:
             'Current portfolio allocations and performance by position',
-          data: portfolioManagerData,
+          data: wagersData,
           columns: portfolioManagerColumns,
-          icon: IconChartBar,
-        };
-      case 'trader':
-        return {
-          title: 'Open Trading Positions',
-          description: 'Live trading positions across prediction market venues',
-          data: traderData,
-          columns: traderColumns,
-          icon: IconTrendingUp,
+          icon: IconChartPie,
+          loading: loading,
         };
       case 'compliance-officer':
         return {
@@ -461,9 +382,9 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
   const config = getTableConfig();
   const IconComponent = config.icon;
 
-  // Show loading state for research analyst
+  // Show loading state for research analyst and portfolio manager
   if (
-    agentType === 'research-analyst' &&
+    (agentType === 'research-analyst' || agentType === 'portfolio-manager') &&
     'loading' in config &&
     config.loading
   ) {
@@ -478,7 +399,7 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
-            Loading research reports...
+            Loading data...
           </div>
         </CardContent>
       </Card>
@@ -505,20 +426,34 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <IconComponent className="h-5 w-5" />
-          {config.title}
-        </CardTitle>
-        <CardDescription>{config.description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <HedgeFundTable
-          data={config.data as Record<string, unknown>[]}
-          columns={config.columns}
-        />
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <IconComponent className="h-5 w-5" />
+            {config.title}
+          </CardTitle>
+          <CardDescription>{config.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <HedgeFundTable
+            data={config.data as Record<string, unknown>[]}
+            columns={config.columns}
+            onRowClick={
+              agentType === 'research-analyst'
+                ? (row) => handleReportClick(row as ResearchReport)
+                : undefined
+            }
+          />
+        </CardContent>
+      </Card>
+
+      <ReportViewer
+        isOpen={isReportViewerOpen}
+        onClose={handleCloseReportViewer}
+        reportTitle={selectedReport?.title || ''}
+        onLoadReport={loadReportFiles}
+      />
+    </>
   );
 }

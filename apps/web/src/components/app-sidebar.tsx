@@ -72,25 +72,6 @@ const data = {
       ],
     },
     {
-      title: 'Trader',
-      url: '/team/trader',
-      icon: IconTrendingUp,
-      items: [
-        {
-          title: 'Open Positions',
-          url: '#',
-        },
-        {
-          title: 'Market Opportunities',
-          url: '#',
-        },
-        {
-          title: 'Execution Tickets',
-          url: '#',
-        },
-      ],
-    },
-    {
       title: 'Compliance Officer',
       url: '/team/compliance-officer',
       icon: IconShield,
@@ -112,17 +93,17 @@ const data = {
   ],
   documents: [
     {
-      name: 'Market Data',
+      name: 'Financial News',
       url: '#',
       icon: IconDatabase,
     },
     {
-      name: 'Performance Reports',
+      name: 'World News',
       url: '#',
       icon: IconReport,
     },
     {
-      name: 'Risk Analytics',
+      name: 'Breaking News',
       url: '#',
       icon: IconAlertTriangle,
     },
