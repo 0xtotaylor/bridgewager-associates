@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useIsInitialized, useIsSignedIn } from '@coinbase/cdp-hooks';
 import { Loader2Icon } from 'lucide-react';
+import { IconListDetails } from '@tabler/icons-react';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
@@ -12,6 +13,13 @@ import { ChartAreaInteractive } from '@/components/chart-area-interactive';
 import { SectionCards } from '@/components/section-cards';
 import { SiteHeader } from '@/components/site-header';
 import { AgentSpecificTable } from '@/components/agent-specific-tables';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 export default function Agent({
   params,
@@ -90,47 +98,133 @@ export default function Agent({
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              {marketId && agent === 'portfolio-manager' && (
-                <div className="px-4 lg:px-6">
-                  <div className="rounded-lg border bg-card p-6">
-                    <h2 className="text-xl font-semibold mb-4">Market Order Details</h2>
-                    
-                    {orderLoading && (
-                      <div className="flex items-center justify-center p-4">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                      </div>
-                    )}
-                    
-                    {orderError && (
-                      <div className="p-3 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg">
-                        {orderError}
-                      </div>
-                    )}
-                    
-                    {!orderLoading && !orderError && (
-                      <>
-                        <div className="mb-3 p-3 bg-muted rounded-lg">
-                          <p className="text-sm text-muted-foreground">Market ID:</p>
-                          <p className="font-mono text-sm break-all">{marketId}</p>
-                        </div>
-                        
-                        {orderData && (
-                          <div className="mt-4">
-                            <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Full Order Data:</h3>
-                            <pre className="bg-muted p-4 rounded-lg overflow-auto text-xs max-h-96">
-                              {JSON.stringify(orderData, null, 2)}
-                            </pre>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
               <SectionCards agentType={agent} />
               <div className="px-4 lg:px-6">
                 <ChartAreaInteractive />
               </div>
+              
+              {/* Open Offers Table - shown above Active Wagers for portfolio-manager */}
+              {marketId && agent === 'portfolio-manager' && orderData && (
+                <div className="px-4 lg:px-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <IconListDetails className="h-5 w-5" />
+                        Open Offers
+                      </CardTitle>
+                      <CardDescription>
+                        Your pending market orders
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {orderLoading && (
+                        <div className="flex items-center justify-center p-8">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                        </div>
+                      )}
+                      
+                      {orderError && (
+                        <div className="p-3 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg">
+                          {orderError}
+                        </div>
+                      )}
+                      
+                      {!orderLoading && !orderError && orderData && (
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                  Market
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                  Side
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                  Outcome
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                  Price
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                  Size
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                  Filled
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                  Status
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                  Type
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                              <tr className="hover:bg-muted/50 transition-colors">
+                                <td className="px-4 py-3">
+                                  <div className="max-w-xs">
+                                    <p className="font-medium text-sm truncate">
+                                      {orderData.marketInfo?.question || 'Unknown Market'}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Ends: {orderData.marketInfo?.endDateIso || 'N/A'}
+                                    </p>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                                    orderData.side === 'BUY' 
+                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                      : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                  }`}>
+                                    {orderData.side}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className="text-sm font-medium">
+                                    {orderData.outcome}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className="text-sm font-mono">
+                                    ${orderData.price}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className="text-sm">
+                                    {orderData.original_size}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className="text-sm">
+                                    {orderData.size_matched}/{orderData.original_size}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                                    orderData.status === 'LIVE'
+                                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                                      : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+                                  }`}>
+                                    {orderData.status}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className="text-sm text-muted-foreground">
+                                    {orderData.order_type}
+                                  </span>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              
               <div className="px-4 lg:px-6">
                 <AgentSpecificTable agentType={agent} />
               </div>
