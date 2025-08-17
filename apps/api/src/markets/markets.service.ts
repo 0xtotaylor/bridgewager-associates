@@ -1,14 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ClobClient } from '@polymarket/clob-client';
 
 @Injectable()
 export class MarketsService {
-  private readonly clobClient: ClobClient;
   private readonly logger = new Logger(MarketsService.name);
-
-  constructor() {
-    this.clobClient = new ClobClient('https://gamma-api.polymarket.com', 137);
-  }
 
   async getMarkets(limit = 50) {
     try {
