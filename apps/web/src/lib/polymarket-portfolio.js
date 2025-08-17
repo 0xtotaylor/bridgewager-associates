@@ -1,12 +1,19 @@
 import dotenv from 'dotenv';
+import { ethers } from 'ethers';
+
 dotenv.config();
 
 /**
- * Configuration for API endpoints
+ * Configuration for API endpoints and contracts
  */
 const API_CONFIG = {
   dataApiUrl: 'https://data-api.polymarket.com',
   gammaApiUrl: 'https://gamma-api.polymarket.com'
+};
+
+const POLYGON_CONFIG = {
+  rpcUrl: 'https://polygon-rpc.com',
+  usdcAddress: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // USDC on Polygon
 };
 
 /**
@@ -125,6 +132,56 @@ export async function getUserPositions(userAddress, options = {}) {
 }
 
 /**
+ * Get USDC balance for a user on Polygon
+ * @param {string} userAddress - The wallet address of the user
+ * @returns {Promise<Object>} Object containing balance in USDC and raw wei
+ */
+export async function getUserUSDCBalance(userAddress) {
+  try {
+    // Create provider
+    const provider = new ethers.providers.JsonRpcProvider(POLYGON_CONFIG.rpcUrl);
+    
+    // USDC contract ABI (minimal - just need balanceOf)
+    const usdcABI = [
+      'function balanceOf(address account) external view returns (uint256)',
+      'function decimals() external view returns (uint8)'
+    ];
+    
+    // Create contract instance
+    const usdcContract = new ethers.Contract(
+      POLYGON_CONFIG.usdcAddress,
+      usdcABI,
+      provider
+    );
+    
+    // Get balance and decimals
+    const [balance, decimals] = await Promise.all([
+      usdcContract.balanceOf(userAddress),
+      usdcContract.decimals()
+    ]);
+    
+    // Convert to human-readable format (USDC has 6 decimals)
+    const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+    
+    return {
+      raw: balance.toString(),
+      formatted: formattedBalance,
+      display: parseFloat(formattedBalance).toFixed(2),
+      decimals: decimals
+    };
+  } catch (error) {
+    console.error('Error fetching USDC balance:', error);
+    // Return zero balance on error
+    return {
+      raw: '0',
+      formatted: '0',
+      display: '0.00',
+      decimals: 6
+    };
+  }
+}
+
+/**
  * Get complete portfolio data for a user
  * @param {string} userAddress - The wallet address of the user
  * @param {Object} options - Optional parameters for each data type
@@ -132,10 +189,11 @@ export async function getUserPositions(userAddress, options = {}) {
  */
 export async function getUserPortfolio(userAddress, options = {}) {
   try {
-    const [trades, holdings, positions] = await Promise.all([
+    const [trades, holdings, positions, usdcBalance] = await Promise.all([
       getUserTrades(userAddress, options.trades || {}),
       getUserHoldings(userAddress, options.market),
-      getUserPositions(userAddress, options.positions || {})
+      getUserPositions(userAddress, options.positions || {}),
+      getUserUSDCBalance(userAddress)
     ]);
 
     return {
@@ -143,6 +201,7 @@ export async function getUserPortfolio(userAddress, options = {}) {
       trades,
       holdings,
       positions,
+      usdcBalance,
       timestamp: new Date().toISOString()
     };
   } catch (error) {

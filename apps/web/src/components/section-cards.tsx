@@ -31,6 +31,7 @@ interface PortfolioMetrics {
   totalPnLPercent: number;
   positionCount: number;
   winRate: number;
+  usdcBalance: number;
 }
 
 export function SectionCards({ agentType }: { agentType?: string }) {
@@ -40,6 +41,7 @@ export function SectionCards({ agentType }: { agentType?: string }) {
     totalPnLPercent: 0,
     positionCount: 0,
     winRate: 0,
+    usdcBalance: 0,
   });
 
   useEffect(() => {
@@ -47,21 +49,24 @@ export function SectionCards({ agentType }: { agentType?: string }) {
       // Fetch portfolio metrics
       const fetchPortfolioMetrics = async () => {
         try {
-          const { getUserPositions, getUserHoldings } = await import(
+          const { getUserPositions, getUserHoldings, getUserUSDCBalance } = await import(
             '@/lib/polymarket-portfolio.js'
           );
 
           const userAddress = '0x4bA01fF1DEfA6948a801d3711892b9c00F170447';
           
-          // Get holdings value
-          const holdings = await getUserHoldings(userAddress);
-          const totalValue = holdings[0]?.value || 0;
+          // Get holdings value and USDC balance in parallel
+          const [holdings, positions, usdcData] = await Promise.all([
+            getUserHoldings(userAddress),
+            getUserPositions(userAddress, {
+              limit: 100,
+              sortBy: 'CURRENT',
+            }),
+            getUserUSDCBalance(userAddress)
+          ]);
           
-          // Get positions for detailed metrics
-          const positions = await getUserPositions(userAddress, {
-            limit: 100,
-            sortBy: 'CURRENT',
-          });
+          const totalValue = holdings[0]?.value || 0;
+          const usdcBalance = parseFloat(usdcData.display);
           
           // Calculate metrics
           const totalPnL = positions.reduce((sum: number, pos: any) => sum + pos.cashPnl, 0);
@@ -76,6 +81,7 @@ export function SectionCards({ agentType }: { agentType?: string }) {
             totalPnLPercent,
             positionCount: positions.length,
             winRate,
+            usdcBalance,
           });
         } catch (error) {
           console.error('Error fetching portfolio metrics:', error);
@@ -101,7 +107,24 @@ export function SectionCards({ agentType }: { agentType?: string }) {
   // Show portfolio-specific metrics for portfolio manager
   if (agentType === 'portfolio-manager') {
     return (
-      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-5">
+      <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-6">
+        <Card className="@container/card metric-card hedge-fund-card">
+          <CardHeader>
+            <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
+              <IconCurrencyDollar className="size-4" />
+              USDC Balance
+            </CardDescription>
+            <CardTitle className="hedge-fund-metric @[250px]/card:text-3xl">
+              ${portfolioMetrics.usdcBalance.toFixed(2)}
+            </CardTitle>
+            <CardAction>
+              <Badge variant="outline" className="hedge-fund-change">
+                Available Funds
+              </Badge>
+            </CardAction>
+          </CardHeader>
+        </Card>
+
         <Card className="@container/card metric-card hedge-fund-card">
           <CardHeader>
             <CardDescription className="flex items-center gap-2 hedge-fund-subtitle">
@@ -113,7 +136,7 @@ export function SectionCards({ agentType }: { agentType?: string }) {
             </CardTitle>
             <CardAction>
               <Badge variant="outline" className="hedge-fund-change">
-                Live Balance
+                In Positions
               </Badge>
             </CardAction>
           </CardHeader>
