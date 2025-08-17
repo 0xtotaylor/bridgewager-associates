@@ -60,7 +60,7 @@ export function AccountDialog({ open, onOpenChange }: AccountDialogProps) {
       riskProfile,
       selectedMarkets,
     });
-    
+
     onOpenChange(false);
   };
 
@@ -77,7 +77,7 @@ export function AccountDialog({ open, onOpenChange }: AccountDialogProps) {
             Configure your risk profile and market preferences to personalize your trading experience.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           <div className="space-y-3">
             <Label htmlFor="risk-profile">Risk Profile</Label>
@@ -121,7 +121,8 @@ export function AccountDialog({ open, onOpenChange }: AccountDialogProps) {
           <Button
             className="bg-green-600 hover:bg-green-700 text-white border-green-600"
             onClick={() => {
-              window.location.href = 'https://dashboard.heyvincent.ai/user/appId/7280666305/connect?redirectUri=https%3A%2F%2Fbridgewager-associates-web.vercel.app%2Fresearch-analyst';
+              // window.location.href = 'https://dashboard.heyvincent.ai/user/appId/7280666305/connect?redirectUri=https%3A%2F%2Fbridgewager-associates-web.vercel.app%2Fresearch-analyst';
+              window.location.href = 'https://dashboard.heyvincent.ai/user/appId/7280666305/connect?redirectUri=localhost%3A3500%2Fteam%2Fresearch-analyst';
             }}
           >
             Set Vincent Preferences

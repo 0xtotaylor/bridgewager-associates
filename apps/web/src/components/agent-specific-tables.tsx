@@ -759,15 +759,30 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
           <CardDescription>{config.description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <HedgeFundTable
-            data={config.data as Record<string, unknown>[]}
-            columns={config.columns}
-            onRowClick={
-              agentType === 'research-analyst'
-                ? (row) => handleReportClick(row as ResearchReport)
-                : undefined
-            }
-          />
+          <div className="relative">
+            <HedgeFundTable
+              data={config.data as Record<string, unknown>[]}
+              columns={config.columns}
+              onRowClick={
+                agentType === 'research-analyst'
+                  ? (row) => handleReportClick(row as ResearchReport)
+                  : undefined
+              }
+            />
+            {agentType === 'research-analyst' && !hasUrlParams && (
+              <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm bg-background/80 rounded-lg">
+                <div className="text-center p-6">
+                  <IconLock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-lg font-semibold text-foreground">
+                    Research Locked to Fund Participants
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Connect your account to access research reports
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
