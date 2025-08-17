@@ -1,6 +1,10 @@
 'use client';
 
+import * as React from 'react';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useIsInitialized, useIsSignedIn } from '@coinbase/cdp-hooks';
+import { Loader2Icon } from 'lucide-react';
 import {
   IconAlertTriangle,
   IconChartBar,
@@ -21,6 +25,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { HedgeFundTable } from '@/components/hedge-fund-table';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/app-sidebar';
+import { ChartAreaInteractive } from '@/components/chart-area-interactive';
+import { SectionCards } from '@/components/section-cards';
+import { SiteHeader } from '@/components/site-header';
+import { PortfolioManagerDashboard } from '@/components/portfolio-manager-dashboard';
 
 // Use research reports data instead of performance metrics
 const researchAnalystData = mockResearchReports;
@@ -377,16 +387,26 @@ const complianceOfficerColumns = [
 ];
 
 interface AgentSpecificTableProps {
-  agentType: string;
+  agent: string;
 }
 
-export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
+export function AgentSpecificTable({ agent }: AgentSpecificTableProps) {
+  const router = useRouter();
+  const { isSignedIn } = useIsSignedIn();
+  const { isInitialized } = useIsInitialized();
   const [researchReports, setResearchReports] = useState<ResearchReport[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Handle authentication
+  useEffect(() => {
+    if (isInitialized && !isSignedIn) {
+      router.push('/login');
+    }
+  }, [isInitialized, isSignedIn, router]);
+
   // Fetch research reports for research analyst
   useEffect(() => {
-    if (agentType === 'research-analyst') {
+    if (agent === 'research-analyst') {
       const loadResearchReports = async () => {
         setLoading(true);
         try {
@@ -408,9 +428,9 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
 
       loadResearchReports();
     }
-  }, [agentType]);
+  }, [agent]);
   const getTableConfig = () => {
-    switch (agentType) {
+    switch (agent) {
       case 'research-analyst':
         return {
           title: 'Research Reports',
@@ -458,16 +478,27 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
     }
   };
 
+  // Show loading spinner while initializing
+  if (!isInitialized || !agent) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2Icon className="h-10 w-10 animate-spin" />
+      </div>
+    );
+  }
+
   const config = getTableConfig();
   const IconComponent = config.icon;
 
-  // Show loading state for research analyst
-  if (
-    agentType === 'research-analyst' &&
-    'loading' in config &&
-    config.loading
-  ) {
-    return (
+  // Render table card component
+  const TableCard = () => {
+    // Show loading state for research analyst
+    if (
+      agent === 'research-analyst' &&
+      'loading' in config &&
+      config.loading
+    ) {
+      return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -482,12 +513,12 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
           </div>
         </CardContent>
       </Card>
-    );
-  }
+      );
+    }
 
-  if (config.data.length === 0) {
-    return (
-      <Card>
+    if (config.data.length === 0) {
+      return (
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <IconComponent className="h-5 w-5" />
@@ -500,12 +531,12 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
             No data available for this agent type
           </div>
         </CardContent>
-      </Card>
-    );
-  }
+        </Card>
+      );
+    }
 
-  return (
-    <Card>
+    return (
+      <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <IconComponent className="h-5 w-5" />
@@ -519,6 +550,47 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
           columns={config.columns}
         />
       </CardContent>
-    </Card>
+      </Card>
+    );
+  };
+
+  // Main layout with sidebar and conditional content
+  return (
+    <SidebarProvider
+      style={
+        {
+          '--sidebar-width': 'calc(var(--spacing) * 72)',
+          '--header-height': 'calc(var(--spacing) * 12)',
+        } as React.CSSProperties
+      }
+    >
+      <AppSidebar variant="inset" />
+      <SidebarInset>
+        <SiteHeader />
+        <div className="flex flex-1 flex-col">
+          <div className="@container/main flex flex-1 flex-col gap-2">
+            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+              {agent === 'portfolio-manager' ? (
+                // Portfolio Manager: Only show the dashboard
+                <div className="px-4 lg:px-6">
+                  <PortfolioManagerDashboard />
+                </div>
+              ) : (
+                // Other Agents: Show SectionCards + ChartAreaInteractive + AgentSpecificTable
+                <>
+                  <SectionCards />
+                  <div className="px-4 lg:px-6">
+                    <ChartAreaInteractive />
+                  </div>
+                  <div className="px-4 lg:px-6">
+                    <TableCard />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
