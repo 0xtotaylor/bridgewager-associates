@@ -304,7 +304,7 @@ const portfolioManagerColumns = [
     header: 'Current Value',
     cell: ({ row }: TableCell) => {
       const allocation = row.getValue('allocation') as number;
-      const weight = row.getValue('weight') as number;
+      const weight = (row.original as any).weight as number;
       return (
         <div className="flex flex-col">
           <span className="font-mono">${allocation?.toFixed(2)}</span>
