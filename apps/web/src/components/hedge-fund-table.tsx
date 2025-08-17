@@ -23,9 +23,10 @@ import {
 interface HedgeFundTableProps<T> {
   data: T[];
   columns: ColumnDef<T>[];
+  onRowClick?: (row: T) => void;
 }
 
-export function HedgeFundTable<T>({ data, columns }: HedgeFundTableProps<T>) {
+export function HedgeFundTable<T>({ data, columns, onRowClick }: HedgeFundTableProps<T>) {
   const table = useReactTable({
     data,
     columns,
@@ -62,6 +63,8 @@ export function HedgeFundTable<T>({ data, columns }: HedgeFundTableProps<T>) {
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && 'selected'}
+                className={onRowClick ? 'cursor-pointer hover:bg-muted/50' : ''}
+                onClick={() => onRowClick?.(row.original)}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>

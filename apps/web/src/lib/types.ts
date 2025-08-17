@@ -193,9 +193,10 @@ export type ResearchReport = {
   title: string;
   author: string;
   publishedDate: string;
-  marketCategory: string;
+  blobObjectId?: string;
+  mimeType?: string;
   confidence: number;
-  recommendation: 'BUY' | 'SELL' | 'HOLD' | 'MONITOR';
+  locked: boolean;
   targetPrice?: number;
   currentPrice?: number;
   summary: string;
