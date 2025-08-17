@@ -59,7 +59,7 @@ export function NavMain({
 
         const data = await response.json();
 
-        const onramp_url = `https://pay.coinbase.com/buy/select-asset?sessionToken=${data.token}&defaultNetwork=base&presetFiatAmount=10`;
+        const onramp_url = `https://pay.coinbase.com/buy/select-asset?sessionToken=${data.token}&defaultNetwork=base&presetFiatAmount=5`;
         setOnrampUrl(onramp_url);
       } catch (error) {
         console.error('Error fetching session:', error);

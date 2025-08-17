@@ -6,7 +6,9 @@ export const dynamic = 'force-dynamic';
 const tusky = new Tusky({ apiKey: process.env.TUSKY_API_KEY });
 
 export async function GET() {
-  const files = await tusky.file.listAll();
+  const files = await tusky.file.listAll({
+    vaultId: process.env.TUSKY_VAULT_ID,
+  });
 
   const fileBuffers = await Promise.all(
     files.map(async (file) => {

@@ -6,6 +6,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { pull } from 'langchain/hub';
 
+import { SupabaseConfig } from '../../config/supabase.config';
 import { MarketsService } from './../../markets/markets.service';
 import { ToolsService } from './tools.service';
 
@@ -19,6 +20,7 @@ export class AgentsService implements OnModuleInit {
   private readonly logger = new Logger(AgentsService.name);
 
   constructor(
+    private readonly supabase: SupabaseConfig,
     private readonly toolsService: ToolsService,
     private readonly configService: ConfigService,
     private readonly marketsService: MarketsService,
@@ -45,7 +47,6 @@ export class AgentsService implements OnModuleInit {
 
   async onModuleInit() {
     try {
-      // await this.run();
       // await this.identifyMarkets();
       this.logger.log('Agents tested successfully on init.');
     } catch (error) {
@@ -85,6 +86,24 @@ export class AgentsService implements OnModuleInit {
       const marketData = markets.data.filter((market) =>
         topBets.map((bet) => bet.market_id).includes(market.id),
       );
+
+      const recordsToInsert = marketData.map((market) => {
+        const correspondingAnalysis = topBets.find(
+          (bet) => bet.market_id === market.id,
+        );
+        return {
+          market,
+          analysis: correspondingAnalysis || null,
+        };
+      });
+
+      const { error } = await this.supabase
+        .from('polymarket')
+        .insert(recordsToInsert);
+
+      if (error) {
+        this.logger.error('Error inserting markets into Supabase:', error);
+      }
 
       await this.run(marketData);
     } catch (error) {

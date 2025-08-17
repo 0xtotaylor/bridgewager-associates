@@ -8,7 +8,9 @@ import {
   IconUsers,
 } from '@tabler/icons-react';
 
-import { mockAgents, mockMarkets } from '@/lib/mock-data';
+import { mockAgents } from '@/lib/mock-data';
+import type { Market } from '@/lib/types';
+import { fetchPolymarketData, transformPolymarketToMarket, calculateMetricsFromPolymarket } from '@/lib/polymarket-data';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -166,20 +168,42 @@ const marketColumns = [
 ];
 
 export function HedgeFundTabs() {
-  const totalEV = mockMarkets.reduce(
-    (sum, market) =>
-      sum +
-      (market.evAfterCost > 0
-        ? (market.evAfterCost * market.sizeSuggested) / 100
-        : 0),
-    0,
-  );
+  const [markets, setMarkets] = React.useState<Market[]>([]);
+  const [metrics, setMetrics] = React.useState<{
+    totalEV?: number;
+    activeMarkets?: number;
+    totalVolume?: number;
+    totalLiquidity?: number;
+    avgSpread?: number;
+  }>({});
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function loadData() {
+      try {
+        const polymarketData = await fetchPolymarketData();
+        const transformedMarkets = transformPolymarketToMarket(polymarketData);
+        const calculatedMetrics = calculateMetricsFromPolymarket(polymarketData);
+        
+        setMarkets(transformedMarkets);
+        setMetrics(calculatedMetrics);
+      } catch (error) {
+        console.error('Error loading market data:', error);
+        setMarkets([]);
+        setMetrics({});
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadData();
+  }, []);
+
+  const totalEV = loading ? 0 : (metrics.totalEV || 0);
   const activeAgents = mockAgents.filter(
     (agent) => agent.status === 'Active',
   ).length;
-  const openMarkets = mockMarkets.filter(
-    (market) => market.status === 'Open',
-  ).length;
+  const openMarkets = loading ? 0 : (metrics.activeMarkets || 0);
 
   return (
     <div className="px-4 lg:px-6">
@@ -204,16 +228,16 @@ export function HedgeFundTabs() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Total Realized EV
+                  Total Estimated EV
                 </CardTitle>
                 <IconChartBar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  ${totalEV.toLocaleString()}
+                  {loading ? 'Loading...' : `$${Math.abs(totalEV).toLocaleString()}`}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  +12.5% from last month
+                  From {openMarkets} active markets
                 </p>
               </CardContent>
             </Card>
@@ -234,13 +258,17 @@ export function HedgeFundTabs() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Best Performing Topic
+                  Market Volume (24h)
                 </CardTitle>
                 <IconTarget className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">Politics</div>
-                <p className="text-xs text-muted-foreground">+18.5% return</p>
+                <div className="text-2xl font-bold">
+                  {loading ? 'Loading...' : `$${(metrics.totalVolume || 0).toLocaleString()}`}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Avg spread: {loading ? '...' : `${((metrics.avgSpread || 0) * 100).toFixed(1)}%`}
+                </p>
               </CardContent>
             </Card>
             <Card>
@@ -260,17 +288,20 @@ export function HedgeFundTabs() {
           </div>
           <Card>
             <CardHeader>
-              <CardTitle>Attribution Waterfall</CardTitle>
+              <CardTitle>Market Intelligence Summary</CardTitle>
               <CardDescription>
-                Performance breakdown by agent and market category
+                Real-time insights from Polymarket data analysis
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-sm text-muted-foreground">
-                Attribution analysis shows Alpha-Research driving 45% of
-                returns, primarily from political prediction markets.
-                Beta-Politics contributed 28% with strong performance in
-                election forecasting.
+                {loading ? (
+                  'Loading market analysis...'
+                ) : (
+                  `Currently monitoring ${openMarkets} active prediction markets with total volume of $${(metrics.totalVolume || 0).toLocaleString()}. 
+                  Market liquidity stands at $${(metrics.totalLiquidity || 0).toLocaleString()} with average spreads of ${((metrics.avgSpread || 0) * 100).toFixed(1)}%. 
+                  Our analysis identifies ${markets.filter(m => m.evAfterCost > 0).length} opportunities with positive expected value.`
+                )}
               </div>
             </CardContent>
           </Card>
@@ -301,7 +332,13 @@ export function HedgeFundTabs() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <HedgeFundTable data={mockMarkets} columns={marketColumns} />
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-muted-foreground">Loading market data...</div>
+                </div>
+              ) : (
+                <HedgeFundTable data={markets} columns={marketColumns} />
+              )}
             </CardContent>
           </Card>
         </TabsContent>

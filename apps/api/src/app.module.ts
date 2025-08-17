@@ -3,8 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 
 import { AgentsModule } from './agents/agents.module';
 import { AgentsService } from './agents/services/agents.service';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { SupabaseConfig } from './config/supabase.config';
 import { MarketsModule } from './markets/markets.module';
 import { MarketsService } from './markets/markets.service';
 
@@ -17,7 +16,6 @@ import { MarketsService } from './markets/markets.service';
     AgentsModule,
     MarketsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, AgentsService, MarketsService],
+  providers: [AgentsService, MarketsService, SupabaseConfig],
 })
 export class AppModule {}

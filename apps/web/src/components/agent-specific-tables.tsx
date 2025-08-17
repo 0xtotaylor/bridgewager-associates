@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   IconAlertTriangle,
   IconChartBar,
@@ -9,7 +9,9 @@ import {
   IconTrendingUp,
 } from '@tabler/icons-react';
 
-import { TableCell } from '@/lib/types';
+import { mockResearchReports } from '@/lib/mock-data';
+import { fetchResearchReports } from '@/lib/polymarket-data';
+import { ResearchReport, TableCell } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -20,32 +22,8 @@ import {
 } from '@/components/ui/card';
 import { HedgeFundTable } from '@/components/hedge-fund-table';
 
-const researchAnalystData = [
-  {
-    metric: 'Forecast Accuracy',
-    value: '74.2%',
-    change: '+3.1%',
-    status: 'improving',
-  },
-  {
-    metric: 'Brier Score',
-    value: '0.142',
-    change: '-0.008',
-    status: 'improving',
-  },
-  {
-    metric: 'Calibration Error',
-    value: '2.3%',
-    change: '-0.5%',
-    status: 'improving',
-  },
-  {
-    metric: 'Market Coverage',
-    value: '127 markets',
-    change: '+12',
-    status: 'stable',
-  },
-];
+// Use research reports data instead of performance metrics
+const researchAnalystData = mockResearchReports;
 
 const portfolioManagerData = [
   {
@@ -151,43 +129,74 @@ const complianceOfficerData = [
 // Column definitions for each agent type
 const researchAnalystColumns = [
   {
-    accessorKey: 'metric',
-    header: 'Performance Metric',
-  },
-  {
-    accessorKey: 'value',
-    header: 'Current Value',
+    accessorKey: 'title',
+    header: 'Report Title',
     cell: ({ row }: TableCell) => {
-      const value = row.getValue('value') as string;
-      return <span className="font-mono font-medium">{value}</span>;
+      const title = row.getValue('title') as string;
+      return <span className="max-w-xs truncate font-medium">{title}</span>;
     },
   },
   {
-    accessorKey: 'change',
-    header: '30d Change',
+    accessorKey: 'author',
+    header: 'Author',
     cell: ({ row }: TableCell) => {
-      const change = row.getValue('change') as string;
-      const isPositive = change.startsWith('+');
+      const author = row.getValue('author') as string;
+      return <span className="font-medium">{author}</span>;
+    },
+  },
+  {
+    accessorKey: 'marketCategory',
+    header: 'Category',
+    cell: ({ row }: TableCell) => {
+      const category = row.getValue('marketCategory') as string;
+      return <Badge variant="outline">{category}</Badge>;
+    },
+  },
+  {
+    accessorKey: 'recommendation',
+    header: 'Recommendation',
+    cell: ({ row }: TableCell) => {
+      const rec = row.getValue('recommendation') as string;
+      const variant =
+        rec === 'BUY'
+          ? 'default'
+          : rec === 'SELL'
+            ? 'destructive'
+            : rec === 'HOLD'
+              ? 'secondary'
+              : 'outline';
+      return <Badge variant={variant}>{rec}</Badge>;
+    },
+  },
+  {
+    accessorKey: 'confidence',
+    header: 'Confidence',
+    cell: ({ row }: TableCell) => {
+      const confidence = row.getValue('confidence') as number;
       return (
-        <span
-          className={`font-mono ${isPositive ? 'text-green-600' : 'text-red-600'}`}
-        >
-          {change}
-        </span>
+        <span className="font-mono">{(confidence * 100).toFixed(0)}%</span>
       );
     },
   },
   {
+    accessorKey: 'publishedDate',
+    header: 'Published',
+    cell: ({ row }: TableCell) => {
+      const date = row.getValue('publishedDate') as string;
+      return <span className="font-mono text-sm">{date}</span>;
+    },
+  },
+  {
     accessorKey: 'status',
-    header: 'Trend',
+    header: 'Status',
     cell: ({ row }: TableCell) => {
       const status = row.getValue('status') as string;
       const variant =
-        status === 'improving'
+        status === 'Published'
           ? 'default'
-          : status === 'stable'
+          : status === 'Draft'
             ? 'secondary'
-            : 'destructive';
+            : 'outline';
       return <Badge variant={variant}>{status}</Badge>;
     },
   },
@@ -372,36 +381,50 @@ interface AgentSpecificTableProps {
 }
 
 export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
-  // Fetch research data for research analyst
+  const [researchReports, setResearchReports] = useState<ResearchReport[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch research reports for research analyst
   useEffect(() => {
     if (agentType === 'research-analyst') {
-      const fetchResearchData = async () => {
+      const loadResearchReports = async () => {
+        setLoading(true);
         try {
-          const response = await fetch('/api/research');
-          const data = await response.json();
-          console.log('Research data:', data);
+          const reports = await fetchResearchReports();
+          if (reports.length > 0) {
+            setResearchReports(reports);
+          } else {
+            // Fallback to mock data if no real data available
+            setResearchReports(mockResearchReports);
+          }
         } catch (error) {
-          console.error('Error fetching research data:', error);
+          console.error('Error fetching research reports:', error);
+          // Fallback to mock data on error
+          setResearchReports(mockResearchReports);
+        } finally {
+          setLoading(false);
         }
       };
 
-      fetchResearchData();
+      loadResearchReports();
     }
   }, [agentType]);
   const getTableConfig = () => {
     switch (agentType) {
       case 'research-analyst':
         return {
-          title: 'Research Performance Metrics',
+          title: 'Research Reports',
           description:
-            'Key performance indicators for forecasting accuracy and market analysis',
-          data: researchAnalystData,
+            'Published research reports and market analysis documents',
+          data:
+            researchReports.length > 0 ? researchReports : researchAnalystData,
           columns: researchAnalystColumns,
           icon: IconTarget,
+          loading: loading,
         };
       case 'portfolio-manager':
         return {
-          title: 'Active Positions',
+          title: 'Active Wagers',
           description:
             'Current portfolio allocations and performance by position',
           data: portfolioManagerData,
@@ -437,6 +460,30 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
 
   const config = getTableConfig();
   const IconComponent = config.icon;
+
+  // Show loading state for research analyst
+  if (
+    agentType === 'research-analyst' &&
+    'loading' in config &&
+    config.loading
+  ) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <IconComponent className="h-5 w-5" />
+            {config.title}
+          </CardTitle>
+          <CardDescription>{config.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            Loading research reports...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (config.data.length === 0) {
     return (

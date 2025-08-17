@@ -108,7 +108,7 @@ export function SectionCards() {
             Bankroll deployed <IconShield className="size-4" />
           </div>
           <div className="text-muted-foreground hedge-fund-subtitle">
-            Percentage of NAV in active positions
+            Percentage of NAV in active wagers
           </div>
         </CardFooter>
       </Card>

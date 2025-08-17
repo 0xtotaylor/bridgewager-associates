@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Area, Bar, CartesianGrid, ComposedChart, XAxis } from 'recharts';
 
-import { mockHistoricalData } from '@/lib/mock-data';
+import { fetchPolymarketData, generateHistoricalDataFromPolymarket } from '@/lib/polymarket-data';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Card,
@@ -45,6 +45,16 @@ export function ChartAreaInteractive() {
   const isMobile = useIsMobile();
   const [timeRange, setTimeRange] = React.useState('90d');
   const [viewType, setViewType] = React.useState('all');
+  const [historicalData, setHistoricalData] = React.useState<Array<{
+    date: string;
+    nav: number;
+    pnlDaily: number;
+    positions: number;
+    drawdown: number;
+    pnlPositive?: number;
+    pnlNegative?: number;
+  }>>([]);
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     if (isMobile) {
@@ -52,7 +62,29 @@ export function ChartAreaInteractive() {
     }
   }, [isMobile]);
 
+  React.useEffect(() => {
+    async function loadData() {
+      try {
+        const polymarketData = await fetchPolymarketData();
+        const historical = generateHistoricalDataFromPolymarket(polymarketData);
+        setHistoricalData(historical);
+      } catch (error) {
+        console.error('Error loading Polymarket data:', error);
+        // Fallback to empty array if data loading fails
+        setHistoricalData([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadData();
+  }, []);
+
   const filteredData = React.useMemo(() => {
+    if (loading || historicalData.length === 0) {
+      return [];
+    }
+
     let daysToSubtract = 90;
     if (timeRange === '30d') {
       daysToSubtract = 30;
@@ -60,12 +92,12 @@ export function ChartAreaInteractive() {
       daysToSubtract = 7;
     }
 
-    return mockHistoricalData.slice(-daysToSubtract).map((item) => ({
+    return historicalData.slice(-daysToSubtract).map((item) => ({
       ...item,
       pnlPositive: item.pnlDaily > 0 ? item.pnlDaily : 0,
       pnlNegative: item.pnlDaily < 0 ? item.pnlDaily : 0,
     }));
-  }, [timeRange]);
+  }, [timeRange, historicalData, loading]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -133,11 +165,16 @@ export function ChartAreaInteractive() {
         </CardAction>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[300px] w-full"
-        >
-          <ComposedChart data={filteredData}>
+        {loading ? (
+          <div className="flex items-center justify-center h-[300px]">
+            <div className="text-muted-foreground">Loading market data...</div>
+          </div>
+        ) : (
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-[300px] w-full"
+          >
+            <ComposedChart data={filteredData}>
             <defs>
               <linearGradient id="fillNav" x1="0" y1="0" x2="0" y2="1">
                 <stop
@@ -213,6 +250,7 @@ export function ChartAreaInteractive() {
             />
           </ComposedChart>
         </ChartContainer>
+        )}
       </CardContent>
     </Card>
   );

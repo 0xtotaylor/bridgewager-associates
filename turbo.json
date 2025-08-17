@@ -8,8 +8,8 @@
       "env": [
         "PORT",
         "TUSKY_API_KEY",
+        "TUSKY_VAULT_ID",
         "NEXT_PUBLIC_CDP_PROJECT_ID",
-        "NEXT_PUBLIC_ONCHAINKIT_API_KEY",
         "CDP_API_KEY_NAME",
         "CDP_API_KEY_PRIVATE_KEY"
       ]
@@ -20,8 +20,8 @@
       "env": [
         "PORT",
         "TUSKY_API_KEY",
+        "TUSKY_VAULT_ID",
         "NEXT_PUBLIC_CDP_PROJECT_ID",
-        "NEXT_PUBLIC_ONCHAINKIT_API_KEY",
         "CDP_API_KEY_NAME",
         "CDP_API_KEY_PRIVATE_KEY"
       ]
