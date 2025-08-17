@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Download, FileText, Share2, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -30,10 +31,12 @@ export function ReportViewer({
   reportTitle,
   onLoadReport,
 }: ReportViewerProps) {
+  const router = useRouter();
   const [files, setFiles] = useState<ReportFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFileContent, setSelectedFileContent] = useState<string>('');
   const [selectedFileName, setSelectedFileName] = useState<string>('');
+  const [placingWager, setPlacingWager] = useState(false);
 
   const loadFileContent = async (file: ReportFile) => {
     try {
@@ -59,6 +62,42 @@ export function ReportViewer({
 
   const handleFileSelect = (file: ReportFile) => {
     loadFileContent(file);
+  };
+
+  const handlePlaceWager = async () => {
+    setPlacingWager(true);
+    try {
+      const order = {
+        tokenID: '60487116984468020978247225474488676749601001829886755968952521846780452448915',
+        side: 'BUY',
+        price: 0.01,
+        size: 100,
+      };
+
+      const response = await fetch('/api/polymarket-place', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(order),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log('Wager placed successfully:', data.orderId);
+        // Redirect to portfolio-manager page with the orderId
+        router.push(`/team/portfolio-manager?marketId=${data.orderId}`);
+      } else {
+        console.error('Failed to place wager:', data.error);
+        alert(`Failed to place wager: ${data.message || data.error}`);
+      }
+    } catch (error) {
+      console.error('Error placing wager:', error);
+      alert('Error placing wager. Please try again.');
+    } finally {
+      setPlacingWager(false);
+    }
   };
 
   const truncateFileName = (fileName: string, maxLength: number = 30) => {
@@ -265,7 +304,12 @@ export function ReportViewer({
                       <div className="flex items-center">
                         <div className="flex-1" />
                         <div className="flex items-center">
-                          <Button>Place Wager</Button>
+                          <Button
+                            onClick={handlePlaceWager}
+                            disabled={placingWager}
+                          >
+                            {placingWager ? 'Placing Wager...' : 'Place Wager'}
+                          </Button>
                         </div>
                       </div>
                     </div>
