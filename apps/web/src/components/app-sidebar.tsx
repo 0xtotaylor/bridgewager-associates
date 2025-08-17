@@ -94,17 +94,17 @@ const data = {
   documents: [
     {
       name: 'Financial News',
-      url: '#',
+      url: 'https://www.ft.com',
       icon: IconDatabase,
     },
     {
-      name: 'World News',
-      url: '#',
+      name: 'Global News',
+      url: 'https://www.bbc.com/news',
       icon: IconReport,
     },
     {
       name: 'Breaking News',
-      url: '#',
+      url: 'https://www.cnn.com',
       icon: IconAlertTriangle,
     },
   ],

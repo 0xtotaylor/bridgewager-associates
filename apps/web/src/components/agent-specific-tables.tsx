@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   IconAlertTriangle,
   IconChartPie,
   IconListDetails,
+  IconLoader,
+  IconLock,
   IconLockOpen,
   IconShield,
-  IconTrendingUp,
 } from '@tabler/icons-react';
 
 import { fetchResearchReports } from '@/lib/polymarket-data';
@@ -86,7 +88,7 @@ const complianceOfficerData = [
 ];
 
 // Column definitions for each agent type
-const researchAnalystColumns = [
+const getResearchAnalystColumns = (hasUrlParams: boolean) => [
   {
     accessorKey: 'title',
     header: 'Report Title',
@@ -119,7 +121,8 @@ const researchAnalystColumns = [
       const locked = Boolean(row.getValue('locked'));
       return (
         <div className="flex items-center justify-center">
-          {!locked && <IconLockOpen className="h-4 w-4 text-green-600" />}
+          {!locked && hasUrlParams && <IconLockOpen className="h-4 w-4 text-green-600" />}
+          {!locked && !hasUrlParams && <IconLock className="h-4 w-4 text-red-600" />}
         </div>
       );
     },
@@ -270,6 +273,8 @@ interface AgentSpecificTableProps {
 }
 
 export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
+  const searchParams = useSearchParams();
+  const hasUrlParams = searchParams.toString().length > 0;
   const [researchReports, setResearchReports] = useState<ResearchReport[]>([]);
   const [wagersData, setWagersData] = useState<WagerData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -319,6 +324,10 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
   }, [agentType]);
 
   const handleReportClick = (report: ResearchReport) => {
+    // Only allow opening report viewer if there are URL params
+    if (!hasUrlParams) {
+      return;
+    }
     setSelectedReport(report);
     setIsReportViewerOpen(true);
   };
@@ -346,7 +355,7 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
           description:
             'Published research reports and market analysis documents',
           data: researchReports,
-          columns: researchAnalystColumns,
+          columns: getResearchAnalystColumns(hasUrlParams),
           icon: IconListDetails,
           loading: loading,
         };
@@ -398,8 +407,8 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
           <CardDescription>{config.description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            Loading data...
+          <div className="flex justify-center py-8">
+            <IconLoader className="animate-spin text-muted-foreground" size={24} />
           </div>
         </CardContent>
       </Card>

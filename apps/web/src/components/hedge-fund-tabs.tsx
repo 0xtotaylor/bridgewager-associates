@@ -3,6 +3,7 @@
 import * as React from 'react';
 import {
   IconChartBar,
+  IconLoader,
   IconTarget,
   IconTrendingUp,
   IconUsers,
@@ -296,7 +297,9 @@ export function HedgeFundTabs() {
             <CardContent>
               <div className="text-sm text-muted-foreground">
                 {loading ? (
-                  'Loading market analysis...'
+                  <div className="flex justify-center">
+                    <IconLoader className="animate-spin" size={20} />
+                  </div>
                 ) : (
                   `Currently monitoring ${openMarkets} active prediction markets with total volume of $${(metrics.totalVolume || 0).toLocaleString()}. 
                   Market liquidity stands at $${(metrics.totalLiquidity || 0).toLocaleString()} with average spreads of ${((metrics.avgSpread || 0) * 100).toFixed(1)}%. 
@@ -334,7 +337,7 @@ export function HedgeFundTabs() {
             <CardContent>
               {loading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="text-muted-foreground">Loading market data...</div>
+                  <IconLoader className="animate-spin text-muted-foreground" size={24} />
                 </div>
               ) : (
                 <HedgeFundTable data={markets} columns={marketColumns} />

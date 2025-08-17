@@ -1,9 +1,13 @@
 'use client';
 
 import * as React from 'react';
+import { IconLoader } from '@tabler/icons-react';
 import { Area, Bar, CartesianGrid, ComposedChart, XAxis } from 'recharts';
 
-import { fetchPolymarketData, generateHistoricalDataFromPolymarket } from '@/lib/polymarket-data';
+import {
+  fetchPolymarketData,
+  generateHistoricalDataFromPolymarket,
+} from '@/lib/polymarket-data';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Card,
@@ -45,15 +49,17 @@ export function ChartAreaInteractive() {
   const isMobile = useIsMobile();
   const [timeRange, setTimeRange] = React.useState('90d');
   const [viewType, setViewType] = React.useState('all');
-  const [historicalData, setHistoricalData] = React.useState<Array<{
-    date: string;
-    nav: number;
-    pnlDaily: number;
-    positions: number;
-    drawdown: number;
-    pnlPositive?: number;
-    pnlNegative?: number;
-  }>>([]);
+  const [historicalData, setHistoricalData] = React.useState<
+    Array<{
+      date: string;
+      nav: number;
+      pnlDaily: number;
+      positions: number;
+      drawdown: number;
+      pnlPositive?: number;
+      pnlNegative?: number;
+    }>
+  >([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -76,7 +82,7 @@ export function ChartAreaInteractive() {
         setLoading(false);
       }
     }
-    
+
     loadData();
   }, []);
 
@@ -166,8 +172,11 @@ export function ChartAreaInteractive() {
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         {loading ? (
-          <div className="flex items-center justify-center h-[300px]">
-            <div className="text-muted-foreground">Loading market data...</div>
+          <div className="flex justify-center py-8">
+            <IconLoader
+              className="animate-spin text-muted-foreground"
+              size={24}
+            />
           </div>
         ) : (
           <ChartContainer
@@ -175,81 +184,81 @@ export function ChartAreaInteractive() {
             className="aspect-auto h-[300px] w-full"
           >
             <ComposedChart data={filteredData}>
-            <defs>
-              <linearGradient id="fillNav" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-nav)"
-                  stopOpacity={0.3}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-nav)"
-                  stopOpacity={0.05}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} strokeDasharray="3 3" />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value);
-                return date.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                });
-              }}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    });
-                  }}
-                  formatter={(value, name) => {
-                    if (name === 'nav') {
-                      return [formatCurrency(Number(value)), 'NAV'];
-                    }
-                    if (name === 'pnlDaily') {
-                      return [formatCurrency(Number(value)), 'Daily P&L'];
-                    }
-                    return [value, name];
-                  }}
-                  indicator="dot"
-                />
-              }
-            />
-            <Area
-              dataKey="nav"
-              type="monotone"
-              fill="url(#fillNav)"
-              stroke="var(--color-nav)"
-              strokeWidth={2}
-              yAxisId="nav"
-            />
-            <Bar
-              dataKey="pnlPositive"
-              fill="hsl(var(--chart-3))"
-              opacity={0.7}
-              yAxisId="pnl"
-            />
-            <Bar
-              dataKey="pnlNegative"
-              fill="hsl(var(--chart-4))"
-              opacity={0.7}
-              yAxisId="pnl"
-            />
-          </ComposedChart>
-        </ChartContainer>
+              <defs>
+                <linearGradient id="fillNav" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-nav)"
+                    stopOpacity={0.3}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-nav)"
+                    stopOpacity={0.05}
+                  />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tickFormatter={(value) => {
+                  const date = new Date(value);
+                  return date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  });
+                }}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value) => {
+                      return new Date(value).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                      });
+                    }}
+                    formatter={(value, name) => {
+                      if (name === 'nav') {
+                        return [formatCurrency(Number(value)), 'NAV'];
+                      }
+                      if (name === 'pnlDaily') {
+                        return [formatCurrency(Number(value)), 'Daily P&L'];
+                      }
+                      return [value, name];
+                    }}
+                    indicator="dot"
+                  />
+                }
+              />
+              <Area
+                dataKey="nav"
+                type="monotone"
+                fill="url(#fillNav)"
+                stroke="var(--color-nav)"
+                strokeWidth={2}
+                yAxisId="nav"
+              />
+              <Bar
+                dataKey="pnlPositive"
+                fill="hsl(var(--chart-3))"
+                opacity={0.7}
+                yAxisId="pnl"
+              />
+              <Bar
+                dataKey="pnlNegative"
+                fill="hsl(var(--chart-4))"
+                opacity={0.7}
+                yAxisId="pnl"
+              />
+            </ComposedChart>
+          </ChartContainer>
         )}
       </CardContent>
     </Card>
