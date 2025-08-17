@@ -22,7 +22,10 @@ export const userParamsSchema = z.object({
  * Commit parameters schema - data passed to commit phase
  */
 export const commitParamsSchema = z.object({
-  // Not used directly in Polymarket policy commit step, kept for compatibility if needed
+  eventId: z.string(),
+  endDate: z.string(),
+  volume1yr: z.number(),
+  daysUntilEnd: z.number(),
 });
 
 /**

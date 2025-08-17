@@ -58,11 +58,7 @@ declare namespace Lit {
      * @param {string} params.tokenId The tokenId to check
      * @returns {Promise<Array<string>>} An array of IPFS IDs of lit actions that are permitted to sign using the PKP tokenId
      */
-    function getPermittedActions({
-      tokenId,
-    }: {
-      tokenId: string;
-    }): Promise<Array<string>>;
+    function getPermittedActions({ tokenId }: { tokenId: string }): Promise<Array<string>>;
 
     /**
      * Get the full list of addresses that are permitted to sign using a given PKP tokenId
@@ -71,11 +67,7 @@ declare namespace Lit {
      * @param {string} params.tokenId The tokenId to check
      * @returns {Promise<Array<string>>} An array of addresses that are permitted to sign using the PKP tokenId
      */
-    function getPermittedAddresses({
-      tokenId,
-    }: {
-      tokenId: string;
-    }): Promise<Array<string>>;
+    function getPermittedAddresses({ tokenId }: { tokenId: string }): Promise<Array<string>>;
 
     /**
      * Get the full list of auth methods that are permitted to sign using a given PKP tokenId
@@ -121,11 +113,7 @@ declare namespace Lit {
      * @param {string} params.publicKey The public key to convert
      * @returns {Promise<string>} The token ID as a string
      */
-    function pubkeyToTokenId({
-      publicKey,
-    }: {
-      publicKey: string;
-    }): Promise<string>;
+    function pubkeyToTokenId({ publicKey }: { publicKey: string }): Promise<string>;
 
     /**
      * Gets latest nonce for the given address on a supported chain
@@ -216,13 +204,7 @@ declare namespace Lit {
      * @param {Object=} params.params Optional parameters to pass to the child Lit Action
      * @returns {Promise<string>} The response from the child Lit Action.  Note that any signatures performed by the child Lit Action will be automatically combined and returned with the parent Lit Action to the Lit JS SDK client.
      */
-    function call({
-      ipfsId,
-      params,
-    }: {
-      ipfsId: string;
-      params?: any;
-    }): Promise<string>;
+    function call({ ipfsId, params }: { ipfsId: string; params?: any }): Promise<string>;
 
     /**
      * Call a smart contract
@@ -232,13 +214,7 @@ declare namespace Lit {
      * @param {string} params.txn The RLP Encoded txn, as a hex string
      * @returns {Promise<string>} The response from calling the contract
      */
-    function callContract({
-      chain,
-      txn,
-    }: {
-      chain: string;
-      txn: string;
-    }): Promise<string>;
+    function callContract({ chain, txn }: { chain: string; txn: string }): Promise<string>;
 
     /**
      * Convert a Uint8Array to a string.  This is a re-export of this function: https://www.npmjs.com/package/Uint8Arrays#tostringarray-encoding--utf8
@@ -256,18 +232,9 @@ declare namespace Lit {
      * @param {string} encoding The encoding to use.  Defaults to "utf8"
      * @returns {Uint8Array} The Uint8Array representation of the string
      */
-    function Uint8ArrayFromString(
-      string: string,
-      encoding?: string
-    ): Uint8Array;
+    function Uint8ArrayFromString(string: string, encoding?: string): Uint8Array;
 
-    function aesDecrypt({
-      symmetricKey,
-      ciphertext,
-    }: {
-      symmetricKey: any;
-      ciphertext: any;
-    }): any;
+    function aesDecrypt({ symmetricKey, ciphertext }: { symmetricKey: any; ciphertext: any }): any;
 
     /**
      * Claim a key through a key identifier, the result of the claim will be added to `claim_id`
@@ -284,13 +251,7 @@ declare namespace Lit {
      * @param {string} params.value The value to broadcast
      * @returns {Promise<string>} The collected responses as a json array
      */
-    function broadcastAndCollect({
-      name,
-      value,
-    }: {
-      name: string;
-      value: string;
-    }): Promise<string>;
+    function broadcastAndCollect({ name, value }: { name: string; value: string }): Promise<string>;
 
     /**
      * Decrypt and combine the provided
@@ -374,7 +335,7 @@ declare namespace Lit {
         waitForResponse: boolean;
         name: string;
       },
-      async_fn: () => Promise<any>
+      async_fn: () => Promise<any>,
     ): Promise<string>;
 
     /**

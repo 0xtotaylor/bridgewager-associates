@@ -37,11 +37,11 @@ export function validateEndDate(
 ): { valid: boolean; daysUntilEnd: number } {
   const now = new Date();
   const end = new Date(endDate);
-  
+
   // Calculate days until end
   const millisecondsPerDay = 1000 * 60 * 60 * 24;
   const daysUntilEnd = Math.ceil((end.getTime() - now.getTime()) / millisecondsPerDay);
-  
+
   return {
     valid: daysUntilEnd > 0 && daysUntilEnd <= maxDaysUntilEnd,
     daysUntilEnd,

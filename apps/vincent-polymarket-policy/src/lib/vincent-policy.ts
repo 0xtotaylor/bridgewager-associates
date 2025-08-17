@@ -25,7 +25,7 @@ export const vincentPolicy = createVincentPolicy({
 
   abilityParamsSchema: abilityParamsSchema,
   userParamsSchema: userParamsSchema,
-  commitParamsSchema: commitParamsSchema as any,
+  commitParamsSchema: commitParamsSchema,
 
   precheckAllowResultSchema: precheckAllowResultSchema,
   precheckDenyResultSchema: precheckDenyResultSchema,
@@ -33,8 +33,8 @@ export const vincentPolicy = createVincentPolicy({
   evalAllowResultSchema: evalAllowResultSchema,
   evalDenyResultSchema: evalDenyResultSchema,
 
-  commitAllowResultSchema: commitAllowResultSchema as any,
-  commitDenyResultSchema: commitDenyResultSchema as any,
+  commitAllowResultSchema: commitAllowResultSchema,
+  commitDenyResultSchema: commitDenyResultSchema,
 
   precheck: async (
     { abilityParams, userParams },
