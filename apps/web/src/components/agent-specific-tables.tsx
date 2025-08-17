@@ -43,7 +43,53 @@ interface WagerData {
   realizedPnl?: number;
 }
 
+interface TradeData {
+  title: string;
+  side: 'BUY' | 'SELL';
+  size: number;
+  price: number;
+  timestamp: number;
+  outcome: string;
+  transactionHash: string;
+  slug: string;
+  icon?: string;
+}
+
 const supabase = createClient();
+
+async function fetchAllWagersData(): Promise<TradeData[]> {
+  try {
+    // Dynamically import the Polymarket portfolio functions
+    const { getUserTrades } = await import('@/lib/polymarket-portfolio.js');
+    
+    // Using a known address for demo purposes - replace with actual user address
+    const userAddress = '0x4bA01fF1DEfA6948a801d3711892b9c00F170447';
+    
+    // Fetch all trades from Polymarket
+    const trades = await getUserTrades(userAddress, {
+      limit: 100,
+      offset: 0,
+    });
+
+    // Transform to TradeData format
+    const transformedData: TradeData[] = trades.map((trade: any) => ({
+      title: trade.title,
+      side: trade.side,
+      size: trade.size,
+      price: trade.price,
+      timestamp: trade.timestamp,
+      outcome: trade.outcome,
+      transactionHash: trade.transactionHash,
+      slug: trade.slug,
+      icon: trade.icon,
+    }));
+
+    return transformedData;
+  } catch (err) {
+    console.error('Error fetching Polymarket trades:', err);
+    return [];
+  }
+}
 
 async function fetchWagersData(): Promise<WagerData[]> {
   try {
@@ -309,6 +355,92 @@ const portfolioManagerColumns = [
   },
 ];
 
+const allWagersColumns = [
+  {
+    accessorKey: 'title',
+    header: 'Market',
+    cell: ({ row }: TableCell) => {
+      const title = row.getValue('title') as string;
+      const outcome = (row.original as any).outcome as string;
+      const slug = (row.original as any).slug as string;
+      return (
+        <div className="flex flex-col">
+          <span className="max-w-xs truncate font-medium">{title}</span>
+          <span className="text-xs text-muted-foreground">
+            {outcome} • {slug}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'side',
+    header: 'Side',
+    cell: ({ row }: TableCell) => {
+      const side = row.getValue('side') as string;
+      return (
+        <Badge variant={side === 'BUY' ? 'default' : 'secondary'}>
+          {side}
+        </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: 'size',
+    header: 'Size',
+    cell: ({ row }: TableCell) => {
+      const size = row.getValue('size') as number;
+      const price = (row.original as any).price as number;
+      const value = size * price;
+      return (
+        <div className="flex flex-col">
+          <span className="font-mono">{size?.toFixed(2)} shares</span>
+          <span className="text-xs text-muted-foreground">
+            ${value?.toFixed(2)} value
+          </span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'price',
+    header: 'Price',
+    cell: ({ row }: TableCell) => {
+      const price = row.getValue('price') as number;
+      return <span className="font-mono">${price?.toFixed(4)}</span>;
+    },
+  },
+  {
+    accessorKey: 'timestamp',
+    header: 'Date',
+    cell: ({ row }: TableCell) => {
+      const timestamp = row.getValue('timestamp') as number;
+      const date = new Date(timestamp * 1000);
+      return (
+        <div className="flex flex-col">
+          <span className="text-sm">{date.toLocaleDateString()}</span>
+          <span className="text-xs text-muted-foreground">
+            {date.toLocaleTimeString()}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'transactionHash',
+    header: 'Transaction',
+    cell: ({ row }: TableCell) => {
+      const hash = row.getValue('transactionHash') as string;
+      const shortHash = hash ? `${hash.slice(0, 6)}...${hash.slice(-4)}` : '';
+      return (
+        <span className="font-mono text-xs">
+          {shortHash}
+        </span>
+      );
+    },
+  },
+];
+
 const complianceOfficerColumns = [
   {
     accessorKey: 'check',
@@ -369,7 +501,9 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
   const hasUrlParams = searchParams.toString().length > 0;
   const [researchReports, setResearchReports] = useState<ResearchReport[]>([]);
   const [wagersData, setWagersData] = useState<WagerData[]>([]);
+  const [allWagersData, setAllWagersData] = useState<TradeData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingTrades, setLoadingTrades] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ResearchReport | null>(
     null,
   );
@@ -412,6 +546,26 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
       };
 
       loadWagersData();
+    }
+  }, [agentType]);
+
+  // Fetch all trades for portfolio manager
+  useEffect(() => {
+    if (agentType === 'portfolio-manager') {
+      const loadAllWagersData = async () => {
+        setLoadingTrades(true);
+        try {
+          const data = await fetchAllWagersData();
+          setAllWagersData(data);
+        } catch (error) {
+          console.error('Error fetching all trades:', error);
+          setAllWagersData([]);
+        } finally {
+          setLoadingTrades(false);
+        }
+      };
+
+      loadAllWagersData();
     }
   }, [agentType]);
 
@@ -526,6 +680,58 @@ export function AgentSpecificTable({ agentType }: AgentSpecificTableProps) {
     );
   }
 
+  // Special handling for portfolio manager - show both Active and All Wagers tables
+  if (agentType === 'portfolio-manager') {
+    return (
+      <>
+        <div className="flex flex-col gap-4">
+          {/* Active Wagers Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <IconComponent className="h-5 w-5" />
+                {config.title}
+              </CardTitle>
+              <CardDescription>{config.description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <HedgeFundTable
+                data={config.data as Record<string, unknown>[]}
+                columns={config.columns}
+              />
+            </CardContent>
+          </Card>
+
+          {/* All Wagers (Trade History) Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <IconListDetails className="h-5 w-5" />
+                All Wagers (Trade History)
+              </CardTitle>
+              <CardDescription>
+                Complete history of all trades and transactions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingTrades ? (
+                <div className="flex justify-center py-8">
+                  <IconLoader className="animate-spin text-muted-foreground" size={24} />
+                </div>
+              ) : (
+                <HedgeFundTable
+                  data={allWagersData as Record<string, unknown>[]}
+                  columns={allWagersColumns}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </>
+    );
+  }
+
+  // Default rendering for other agent types
   return (
     <>
       <Card>
