@@ -7,8 +7,10 @@ import {
   IconNotification,
   IconUserCircle,
 } from '@tabler/icons-react';
+import { useEnsAvatar, useEnsName } from 'wagmi';
+import { mainnet } from 'wagmi/chains';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +30,19 @@ export function NavUser({ user }: { user: User }) {
   const { signOut } = useSignOut();
   const { isMobile } = useSidebar();
 
+  const { data: name } = useEnsName({
+    address: user.evmAccounts?.[0],
+    chainId: mainnet.id,
+  });
+
+  const { data: ensAvatar } = useEnsAvatar({
+    name: name ?? '',
+    chainId: mainnet.id,
+  });
+
+  console.log('ensName', name);
+  console.log('ensAvatar', ensAvatar);
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -38,6 +53,7 @@ export function NavUser({ user }: { user: User }) {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
+                <AvatarImage src={ensAvatar ?? ''} alt={ensAvatar ?? ''} />
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
